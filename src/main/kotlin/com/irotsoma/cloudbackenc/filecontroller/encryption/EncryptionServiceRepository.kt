@@ -21,6 +21,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.MissingKotlinParameterException
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.irotsoma.cloudbackenc.common.VersionedExtensionFactoryClass
+import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.*
 import com.irotsoma.cloudbackenc.common.logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
@@ -56,15 +58,18 @@ open class EncryptionServiceRepository : ApplicationContextAware {
     fun loadDynamicServices() {
         //external config extension directory
         val extensionsDirectory: File = File(encryptionServicesSettings.directory)
-        if (!extensionsDirectory.isDirectory || !extensionsDirectory.canRead()) {
-            LOG.warn("Extensions directory is missing or unreadable. ${extensionsDirectory.absolutePath}")
-            return
-        }
         //internal resources extension directory (packaged extensions or test extensions)
         val resourcesExtensionsDirectory: File? = File(javaClass.classLoader.getResource("extensions").file)
-
-        var jarURLs = emptyArray<URL>()
-        var factoryClasses = emptyMap<UUID,String>()
+        if ((!extensionsDirectory.isDirectory || !extensionsDirectory.canRead()) && ((!(resourcesExtensionsDirectory?.isDirectory ?: false) || !(resourcesExtensionsDirectory?.canRead() ?: false)))) {
+            LOG.warn("Extensions directory is missing or unreadable.")
+            LOG.warn("Config directory: ${extensionsDirectory.absolutePath}")
+            LOG.warn("Resource directory: ${resourcesExtensionsDirectory?.absolutePath}")
+            return
+        }
+        LOG.debug("Config extension directory:  ${extensionsDirectory.absolutePath}")
+        LOG.debug("Resources extension directory:  ${resourcesExtensionsDirectory?.absolutePath}")
+        val jarURLs : HashMap<UUID,URL> = HashMap()
+        val factoryClasses: HashMap<UUID, VersionedExtensionFactoryClass> = HashMap()
 
         for (jar in (extensionsDirectory.listFiles{directory, name -> (!File(directory,name).isDirectory && name.endsWith(".jar"))} ?: arrayOf<File>()).plus(resourcesExtensionsDirectory?.listFiles{directory, name -> (!File(directory,name).isDirectory && name.endsWith(".jar"))} ?: arrayOf<File>())) {
             try {
@@ -81,9 +86,18 @@ open class EncryptionServiceRepository : ApplicationContextAware {
                     val mapperData: EncryptionServiceExtensionConfig = mapper.readValue(jsonValue)
                     //add values to maps for consumption later
                     val encryptionServiceUUID = UUID.fromString(mapperData.serviceUUID)
-                    factoryClasses = factoryClasses.plus(Pair(encryptionServiceUUID,mapperData.packageName+"."+mapperData.factoryClass))
-                    encryptionServiceNames.add(EncryptionServiceExtension(encryptionServiceUUID,mapperData.serviceName))
-                    jarURLs = jarURLs.plus(jar.toURI().toURL())
+                    if (factoryClasses.containsKey(encryptionServiceUUID)){
+                        //if the UUID is already in the map check to see if it's a newer version.  If so replace, the existing one, otherwise ignore the new one.
+                        if (factoryClasses[encryptionServiceUUID]!!.version < mapperData.releaseVersion){
+                            factoryClasses.replace(encryptionServiceUUID, VersionedExtensionFactoryClass("${mapperData.packageName}.${mapperData.factoryClass}", mapperData.releaseVersion))
+                            jarURLs.replace(encryptionServiceUUID,jar.toURI().toURL())
+                        }
+                    } else {
+                        //if the UUID is not in the map add it
+                        factoryClasses.put(encryptionServiceUUID, VersionedExtensionFactoryClass("${mapperData.packageName}.${mapperData.factoryClass}", mapperData.releaseVersion))
+                        jarURLs.put(encryptionServiceUUID,jar.toURI().toURL())
+                        encryptionServiceNames.add(EncryptionServiceExtension(encryptionServiceUUID, mapperData.serviceName))
+                    }
                 }
             } catch (e: MissingKotlinParameterException) {
                 LOG.warn("Encryption service extension configuration file is missing a required field.  This extension will be unavailable: ${jar.name}.  Error Message: ${e.message}")
@@ -92,11 +106,11 @@ open class EncryptionServiceRepository : ApplicationContextAware {
             }
         }
         //create a class loader with all of the jars
-        val classLoader = URLClassLoader(jarURLs,_applicationContext.classLoader)
+        val classLoader = URLClassLoader(jarURLs.values.toTypedArray(), _applicationContext.classLoader)
         //cycle through all of the classes, make sure they inheritors EncryptionServiceFactory, and add them to the list
         for ((key, value) in factoryClasses) {
             try{
-                val gdClass = classLoader.loadClass(value)
+                val gdClass = classLoader.loadClass(value.canonicalName)
                 //verify instance of gdClass is a EncryptionServiceFactory
                 if (gdClass.newInstance() is EncryptionServiceFactory) {
                     //add to list -- suppress warning about unchecked class as we did that in the if statement for an instance but it can't be done directly

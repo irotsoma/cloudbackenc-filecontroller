@@ -3,6 +3,8 @@
  */
 package com.irotsoma.cloudbackenc.filecontroller
 
+import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionServiceFileRequest
+import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionServiceSymmetricEncryptionAlgorithms
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Value

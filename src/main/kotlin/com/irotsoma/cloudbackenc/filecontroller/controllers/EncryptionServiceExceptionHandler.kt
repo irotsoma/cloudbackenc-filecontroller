@@ -20,6 +20,7 @@
 package com.irotsoma.cloudbackenc.filecontroller.controllers
 
 import com.irotsoma.cloudbackenc.common.RestException
+import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionServiceException
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.ControllerAdvice

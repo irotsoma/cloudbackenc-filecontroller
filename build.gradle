@@ -75,10 +75,12 @@ repositories {
         }
     }
 }
-if (project.version.endsWith('-SNAPSHOT')) {
+if (!isReleaseVersion) {
     configurations.all {
         // check for updates every build
-        resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+        resolutionStrategy{
+            cacheChangingModulesFor 0, 'seconds'
+        }
     }
 }
 dependencies {
@@ -99,7 +101,8 @@ dependencies {
     compile "org.apache.commons:commons-compress:$apacheCommonsCompressionVersion"
     //common classes
     compile "com.irotsoma.cloudbackenc:common:$commonVersion"
-    compile "com.irotsoma.cloudbackenc.common:cloudservice:$commonVersion"
+    compile "com.irotsoma.cloudbackenc.common:cloudservicesserviceinterface:$commonVersion"
+    compile "com.irotsoma.cloudbackenc.common:encryptionserviceinterface:$commonVersion"
     //test
     testCompile 'org.springframework.boot:spring-boot-starter-test'
     testCompile "junit:junit:$junitVersion"
@@ -161,7 +164,9 @@ artifacts {
 compileJava.dependsOn(processResources)
 
 processResources {
-    expand(project.properties)
+    filesMatching('application.properties') {
+        expand(project.properties)
+    }
 }
 
 springBoot {

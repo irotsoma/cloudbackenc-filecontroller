@@ -3,3 +3,6 @@
 build/
 *.iml
 logs/
+config/extensions
+config/database/
+
