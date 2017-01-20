@@ -17,10 +17,9 @@
 buildscript {
     ext.commonVersion = '0.2-SNAPSHOT'
     ext.springBootVersion = '1.4.2.RELEASE'
-    ext.tornadofxVersion = '1.5.7'
     ext.junitVersion = '4.12'
     ext.log4jVersion = '2.6.2'
-    ext.kotlinVersion = '1.0.5-2'
+    ext.kotlinVersion = '1.1-M04'
     ext.apacheCommonsValidatorVersion = '1.5.1'
     ext.jacksonVersion = '2.8.5'
 
@@ -29,6 +28,8 @@ buildscript {
         jcenter()
         maven {url 'http://repo.spring.io/plugins-release'}
 
+        //kotlin 1.1 EAP
+        maven {url 'http://dl.bintray.com/kotlin/kotlin-eap-1.1'}
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
@@ -73,6 +74,9 @@ repositories {
             url 'https://oss.sonatype.org/content/repositories/snapshots/'
         }
     }
+
+    //kotlin 1.1 EAP
+    maven {url 'http://dl.bintray.com/kotlin/kotlin-eap-1.1'}
 }
 if (!isReleaseVersion) {
     configurations.all {
