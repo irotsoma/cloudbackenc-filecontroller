@@ -19,7 +19,7 @@ buildscript {
     ext.springBootVersion = '1.4.2.RELEASE'
     ext.junitVersion = '4.12'
     ext.log4jVersion = '2.6.2'
-    ext.kotlinVersion = '1.1-M04'
+    ext.kotlinVersion = '1.1.0-beta-17'
     ext.apacheCommonsValidatorVersion = '1.5.1'
     ext.jacksonVersion = '2.8.5'
 
