@@ -32,7 +32,7 @@ import javax.servlet.http.HttpServletResponse
  * Controller advice for custom exceptions.  Allows for customizing the messages returned to the REST client.
  */
 @ControllerAdvice
-open class EncryptionServiceExceptionHandler : ResponseEntityExceptionHandler() {
+class EncryptionServiceExceptionHandler : ResponseEntityExceptionHandler() {
 
     @ExceptionHandler(EncryptionServiceException::class)
     fun handleCloudServiceException(response: HttpServletResponse, exception: EncryptionServiceException) : String?{

@@ -42,7 +42,7 @@ import javax.annotation.PostConstruct
  * Imports and stores information about installed Encryption Service Extensions
  */
 @Component
-open class EncryptionServiceRepository : ApplicationContextAware {
+class EncryptionServiceRepository : ApplicationContextAware {
     companion object { val LOG by logger() }
     //inject settings
     @Autowired lateinit var encryptionServicesSettings: EncryptionServicesSettings

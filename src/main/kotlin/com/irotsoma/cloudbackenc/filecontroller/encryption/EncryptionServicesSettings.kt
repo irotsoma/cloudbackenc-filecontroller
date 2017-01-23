@@ -31,7 +31,7 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 @EnableConfigurationProperties
 @ConfigurationProperties("encryptionservices")
-open class EncryptionServicesSettings {
+class EncryptionServicesSettings {
     lateinit var directory: String
     lateinit var configFileName: String
 }
