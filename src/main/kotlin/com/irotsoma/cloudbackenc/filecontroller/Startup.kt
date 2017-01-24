@@ -23,7 +23,7 @@ import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 
 @SpringBootApplication
-open class FileController
+class FileController
 
 fun main(args: Array<String>) {
     //val context =
