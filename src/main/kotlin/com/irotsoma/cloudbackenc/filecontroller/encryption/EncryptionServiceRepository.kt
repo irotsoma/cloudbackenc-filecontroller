@@ -23,7 +23,7 @@ import com.fasterxml.jackson.module.kotlin.MissingKotlinParameterException
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.irotsoma.cloudbackenc.common.VersionedExtensionFactoryClass
 import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.*
-import com.irotsoma.cloudbackenc.common.logger
+import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -43,7 +43,8 @@ import javax.annotation.PostConstruct
  */
 @Component
 class EncryptionServiceRepository : ApplicationContextAware {
-    companion object { val LOG by logger() }
+    /** kotlin-logging implementation*/
+    companion object: KLogging()
     //inject settings
     @Autowired lateinit var encryptionServicesSettings: EncryptionServicesSettings
     var encryptionServiceExtensions = emptyMap<UUID,Class<EncryptionServiceFactory>>()
@@ -61,13 +62,13 @@ class EncryptionServiceRepository : ApplicationContextAware {
         //internal resources extension directory (packaged extensions or test extensions)
         val resourcesExtensionsDirectory: File? = File(javaClass.classLoader.getResource("extensions").file)
         if ((!extensionsDirectory.isDirectory || !extensionsDirectory.canRead()) && ((!(resourcesExtensionsDirectory?.isDirectory ?: false) || !(resourcesExtensionsDirectory?.canRead() ?: false)))) {
-            LOG.warn("Extensions directory is missing or unreadable.")
-            LOG.warn("Config directory: ${extensionsDirectory.absolutePath}")
-            LOG.warn("Resource directory: ${resourcesExtensionsDirectory?.absolutePath}")
+            logger.warn{"Extensions directory is missing or unreadable."}
+            logger.debug{"Config directory: ${extensionsDirectory.absolutePath}"}
+            logger.debug{"Resource directory: ${resourcesExtensionsDirectory?.absolutePath}"}
             return
         }
-        LOG.debug("Config extension directory:  ${extensionsDirectory.absolutePath}")
-        LOG.debug("Resources extension directory:  ${resourcesExtensionsDirectory?.absolutePath}")
+        logger.trace{"Config extension directory:  ${extensionsDirectory.absolutePath}"}
+        logger.trace{"Resources extension directory:  ${resourcesExtensionsDirectory?.absolutePath}"}
         val jarURLs : HashMap<UUID,URL> = HashMap()
         val factoryClasses: HashMap<UUID, VersionedExtensionFactoryClass> = HashMap()
 
@@ -77,7 +78,7 @@ class EncryptionServiceRepository : ApplicationContextAware {
                 //read config file from jar if present
                 val jarFileEntry = jarFile.getEntry(encryptionServicesSettings.configFileName)
                 if (jarFileEntry == null) {
-                    LOG.debug("Extension file missing config file named ${encryptionServicesSettings.configFileName}. Skipping jar file: ${jar.absolutePath}")
+                    logger.warn{"Extension file missing config file named ${encryptionServicesSettings.configFileName}. Skipping jar file: ${jar.absolutePath}"}
                 }
                 else {
                     //get Json config file data
@@ -100,9 +101,9 @@ class EncryptionServiceRepository : ApplicationContextAware {
                     }
                 }
             } catch (e: MissingKotlinParameterException) {
-                LOG.warn("Encryption service extension configuration file is missing a required field.  This extension will be unavailable: ${jar.name}.  Error Message: ${e.message}")
+                logger.warn{"Encryption service extension configuration file is missing a required field.  This extension will be unavailable: ${jar.name}.  Error Message: ${e.message}"}
             } catch (e: Exception) {
-                LOG.warn("Error processing encryption service extension file. This extension will be unavailable: ${jar.name}.   Error Message: ${e.message}")
+                logger.warn{"Error processing encryption service extension file. This extension will be unavailable: ${jar.name}.   Error Message: ${e.message}"}
             }
         }
         //create a class loader with all of the jars
@@ -117,10 +118,10 @@ class EncryptionServiceRepository : ApplicationContextAware {
                     encryptionServiceExtensions = encryptionServiceExtensions.plus(Pair(key, @Suppress("UNCHECKED_CAST")(gdClass as Class<EncryptionServiceFactory>)))
                 }
                 else {
-                    LOG.warn("Error loading encryption service extension: Factory is not an instance of EncryptionServiceFactory: $value" )
+                    logger.warn{"Error loading encryption service extension: Factory is not an instance of EncryptionServiceFactory: $value" }
                 }
             } catch(e: ClassNotFoundException){
-                LOG.warn("Error loading encryption service extension: $value: ${e.message}")
+                logger.warn{"Error loading encryption service extension: $value: ${e.message}"}
             }
         }
     }

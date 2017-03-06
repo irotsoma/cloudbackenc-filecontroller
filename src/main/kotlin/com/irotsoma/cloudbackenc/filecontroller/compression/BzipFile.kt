@@ -10,7 +10,7 @@ import java.io.*
 
 class BzipFile {
     companion object{
-        val bufferSize = 2048
+        const val bufferSize = 2048
     }
     fun decompressFile(inputFile: File, outputFile: File){
         val inputFileStream = FileInputStream(inputFile)

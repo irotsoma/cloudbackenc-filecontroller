@@ -22,6 +22,7 @@ buildscript {
     ext.kotlinVersion = '1.1.0'
     ext.dokkaVersion = '0.9.13'
     ext.liquibaseGradleVersion = '1.2.1'
+    ext.kotlinLoggingVersion = '1.4.3'
 
     repositories {
         mavenCentral()
@@ -86,12 +87,12 @@ if (!isReleaseVersion) {
 }
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
-    compile "org.apache.logging.log4j:log4j-1.2-api:$log4jVersion"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
     //spring
     compile 'org.springframework.boot:spring-boot-starter-actuator'
     compile 'org.springframework.boot:spring-boot-starter-web'
     compile 'org.springframework.boot:spring-boot-starter-logging'
+    compile 'org.springframework.boot:spring-boot-starter-log4j2'
     optional 'org.springframework.boot:spring-boot-configuration-processor'
     //jackson
     compile 'com.fasterxml.jackson.module:jackson-module-kotlin'
@@ -102,9 +103,10 @@ dependencies {
     compile "com.irotsoma.cloudbackenc:common:$commonVersion"
     compile "com.irotsoma.cloudbackenc.common:cloudservicesserviceinterface:$commonVersion"
     compile "com.irotsoma.cloudbackenc.common:encryptionserviceinterface:$commonVersion"
+    //logging
+    compile "io.github.microutils:kotlin-logging:$kotlinLoggingVersion"
     //test
     testCompile 'org.springframework.boot:spring-boot-starter-test'
-    testCompile "junit:junit:$junitVersion"
 }
 sourceSets {
     main.java.srcDirs += 'src/main/kotlin'
