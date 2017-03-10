@@ -16,7 +16,7 @@
  */
 buildscript {
     ext.commonVersion = '0.2-SNAPSHOT'
-    ext.springBootVersion = '1.4.3.RELEASE'
+    ext.springBootVersion = '1.5.2.RELEASE'
     ext.junitVersion = '4.12'
     ext.log4jVersion = '2.7'
     ext.kotlinVersion = '1.1.0'
