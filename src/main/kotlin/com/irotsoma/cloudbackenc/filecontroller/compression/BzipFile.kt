@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017  Irotsoma, LLC
+ * Copyright (C) 2016-2017  Irotsoma, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -23,11 +23,25 @@ import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream
 import java.io.*
 
-
+/**
+ * Bzip compression/decompression utility
+ *
+ * @author Justin Zak
+ */
 class BzipFile {
     companion object{
+        /**
+         * file buffer size
+         */
         const val bufferSize = 2048
     }
+
+    /**
+     * decompress a compressed file
+     *
+     * @param inputFile The compressed file to decompress
+     * @param outputFile The file object that will hold the decompressed file
+     */
     fun decompressFile(inputFile: File, outputFile: File){
         val inputFileStream = FileInputStream(inputFile)
         val inputBuffered = BufferedInputStream(inputFileStream)
@@ -42,6 +56,12 @@ class BzipFile {
         inputBzip.close()
         output.close()
     }
+    /**
+     * compress a file
+     *
+     * @param inputFile The file to compress
+     * @param outputFile The file object that will hold the compressed file
+     */
     fun compressFile(inputFile: File, outputFile: File){
         val outputFileStream = FileOutputStream(outputFile)
         val outputBuffered = BufferedOutputStream(outputFileStream)
