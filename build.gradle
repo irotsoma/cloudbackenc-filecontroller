@@ -166,3 +166,6 @@ processResources {
 springBoot {
     executable = true
 }
+compileKotlin {
+    kotlinOptions.jvmTarget= "1.8"
+}
