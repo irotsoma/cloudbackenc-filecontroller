@@ -18,7 +18,7 @@ buildscript {
     ext.springBootVersion = '1.5.2.RELEASE'
     ext.junitVersion = '4.12'
     ext.log4jVersion = '2.7'
-    ext.kotlinVersion = '1.1.1'
+    ext.kotlinVersion = '1.1.2'
     ext.dokkaVersion = '0.9.13'
     ext.liquibaseGradleVersion = '1.2.1'
     ext.kotlinLoggingVersion = '1.4.3'
