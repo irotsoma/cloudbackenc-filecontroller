@@ -13,20 +13,29 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-/*
- * Created by irotsoma on 10/28/16.
+
+/**
+ * Created by irotsoma on 4/27/17.
  */
 package com.irotsoma.cloudbackenc.filecontroller
 
-import org.springframework.boot.SpringApplication
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.scheduling.annotation.EnableScheduling
+import org.springframework.context.annotation.Configuration
+import org.springframework.scheduling.annotation.SchedulingConfigurer
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
+import org.springframework.scheduling.config.ScheduledTaskRegistrar
 
-@SpringBootApplication
-@EnableScheduling
-class FileController
 
-fun main(args: Array<String>) {
-    //val context =
-    SpringApplication.run(FileController::class.java, *args)
+/**
+ * Change the scheduler pool size to allow more than one scheduled tasks to run
+ *
+ * @author Justin Zak
+ */
+@Configuration
+class SchedulingConfiguration : SchedulingConfigurer {
+    override fun configureTasks(taskRegistrar: ScheduledTaskRegistrar) {
+        val taskScheduler = ThreadPoolTaskScheduler()
+        taskScheduler.poolSize = 10
+        taskScheduler.initialize()
+        taskRegistrar.setTaskScheduler(taskScheduler)
+    }
 }

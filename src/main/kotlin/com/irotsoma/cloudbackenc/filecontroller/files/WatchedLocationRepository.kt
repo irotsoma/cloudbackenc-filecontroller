@@ -13,20 +13,19 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-/*
- * Created by irotsoma on 10/28/16.
+
+/**
+ * Created by irotsoma on 4/27/17.
  */
-package com.irotsoma.cloudbackenc.filecontroller
+package com.irotsoma.cloudbackenc.filecontroller.files
 
-import org.springframework.boot.SpringApplication
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.scheduling.annotation.EnableScheduling
+import org.springframework.data.jpa.repository.JpaRepository
 
-@SpringBootApplication
-@EnableScheduling
-class FileController
+/**
+ *
+ *
+ * @author Justin Zak
+ */
+interface WatchedLocationRepository: JpaRepository<WatchedLocation, Long>{
 
-fun main(args: Array<String>) {
-    //val context =
-    SpringApplication.run(FileController::class.java, *args)
 }
