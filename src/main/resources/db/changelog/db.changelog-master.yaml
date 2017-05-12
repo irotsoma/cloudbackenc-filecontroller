@@ -1,0 +1,80 @@
+#
+# Copyright (C) 2016-2017  Irotsoma, LLC
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>
+#
+
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: irotsoma
+      changes:
+        - createTable:
+            tableName: file
+              - column:
+                  name: uuid
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: path
+                  type: nvarchar(max)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: recursive
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: filter
+                  type: nvarchar(max)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: last_updated
+                  type: datetime
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_token
+                  type: nvarchar(max)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: remote_uuid
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: encryption_is_symmetric
+                  type: boolean
+                  constraints:
+                    nullable: false
+              - column:
+                  name: secret_key
+                  type: nvarchar(max)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: public_key
+                  type: nvarchar(max)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: initialization_vector
+                  type: varbinary(max)
+                  constraints:
+                    nullable: true

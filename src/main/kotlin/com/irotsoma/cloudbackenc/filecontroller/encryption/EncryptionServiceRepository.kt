@@ -85,7 +85,7 @@ class EncryptionServiceRepository : ApplicationContextAware {
                     val mapper = ObjectMapper().registerModule(KotlinModule())
                     val mapperData: EncryptionServiceExtensionConfig = mapper.readValue(jsonValue)
                     //add values to maps for consumption later
-                    val encryptionServiceUUID = UUID.fromString(mapperData.serviceUUID)
+                    val encryptionServiceUUID = UUID.fromString(mapperData.serviceUuid)
                     if (factoryClasses.containsKey(encryptionServiceUUID)){
                         //if the UUID is already in the map check to see if it's a newer version.  If so replace, the existing one, otherwise ignore the new one.
                         if (factoryClasses[encryptionServiceUUID]!!.version < mapperData.releaseVersion){

@@ -27,5 +27,6 @@ import org.springframework.data.jpa.repository.JpaRepository
  * @author Justin Zak
  */
 interface WatchedLocationRepository: JpaRepository<WatchedLocation, Long>{
+    fun findByPath(path:String): List<WatchedLocation>
 
 }

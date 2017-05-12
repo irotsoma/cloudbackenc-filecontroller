@@ -19,14 +19,35 @@
  */
 package com.irotsoma.cloudbackenc.filecontroller.files
 
+import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
+import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
 import mu.KLogging
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.filefilter.TrueFileFilter
+import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.core.io.ClassPathResource
+import org.springframework.http.HttpEntity
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.scheduling.annotation.Async
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import java.nio.file.*
+import org.springframework.util.LinkedMultiValueMap
+import org.springframework.web.client.RestTemplate
+import java.io.File
+import java.nio.file.FileSystems
+import java.nio.file.Path
+import java.nio.file.StandardWatchEventKinds
+import java.nio.file.WatchService
+import java.util.*
+import java.util.concurrent.Future
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 import javax.annotation.PostConstruct
+import javax.annotation.PreDestroy
+
 
 /**
  *
@@ -35,66 +56,155 @@ import javax.annotation.PostConstruct
  */
 @Component
 class FileSystemWatcherService {
+    data class QueueItem(val uuid: UUID, val path: Path, val token: String)
     /** kotlin-logging implementation*/
-    companion object: KLogging()
+    companion object: KLogging(){
+        private const val POLL_TIMEOUT = 5000L
+    }
 
     @Autowired
     lateinit var watchedLocationRepository: WatchedLocationRepository
+    @Autowired
+    lateinit var centralControllerSettings: CentralControllerSettings
 
-    val watchServices = HashMap<FileSystem, WatchService>()
+    var watchService: WatchService? = null
 
-    private val filesToUpdate = LinkedBlockingQueue<WatchEvent<*>>()
+    private val filesToUpdate = LinkedBlockingQueue<QueueItem>()
+
+    @Volatile private var keepRunning = false
+    var sendFilesStatus: Future<Any>? = null
 
     @PostConstruct
     fun initializeService(){
-        watchServices.clear()
+
+
+        watchService = FileSystems.getDefault().newWatchService()
         watchedLocationRepository.findAll()
-            .map { Paths.get(it.path).toAbsolutePath() }
-            .forEach {
-                if (it.toFile().canRead()){
-                    val fileSystem = it.root.fileSystem
-                    //create a watch service for each new file system encountered
-                    if (!watchServices.containsKey(fileSystem)) {
-                        watchServices.put(fileSystem, fileSystem.newWatchService())
+            .forEach { watchedLocation ->
+                val filter = WildcardFileFilter(if (watchedLocation.filter.isNullOrBlank()) {"*"} else{ watchedLocation.filter })
+                //val directoryStream = Files.newDirectoryStream(Paths.get(watchedLocation.path), filter)
+                val files =
+                    if (watchedLocation.recursive) {
+                        FileUtils.listFiles(File(watchedLocation.path), filter, TrueFileFilter.INSTANCE)
+                    } else {
+                        FileUtils.listFiles(File(watchedLocation.path), filter, null)
                     }
-                    it.register(watchServices[fileSystem],StandardWatchEventKinds.ENTRY_CREATE,StandardWatchEventKinds.ENTRY_DELETE,StandardWatchEventKinds.ENTRY_MODIFY)
 
-                } else {
-                    logger.debug{"Unable to access registered path: $it"}
-                }
-            }
-        sendFileRequests()
-    }
-
-    @Scheduled(fixedDelayString="\$filecontroller.poll.frequency")
-    private fun pollWatchers(){
-        for (watchService in watchServices){
-            try {
-                var watchKey = watchService.value.poll()
-                do {
-                    watchKey.pollEvents().forEach {
-                        //remove duplicates and save to be processed
-                        if (it.kind().type() is Path) {
-                            val path = it.context() as Path
-                            //remove already queued instances of this work item
-                            filesToUpdate.removeIf{ (it.context() as Path) == path }
-                            filesToUpdate.put(it)
+                files.forEach { watchedFile ->
+                    if ((watchedFile is File)){
+                        if ((watchedFile).canRead()) {
+                            //register the path with the watch service
+                            watchedFile.toPath().register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY)
+                            //if the last modified date is greater than the one in the database then add the file to the queue to be updated at the cloud service
+                            if (watchedFile.lastModified() > watchedLocation.lastUpdated.time) {
+                                filesToUpdate.put(QueueItem(watchedLocation.uuid, watchedFile.toPath().toAbsolutePath(), watchedLocation.userToken))
+                            }
+                        } else {
+                            logger.debug{"Unable to access registered path: $watchedFile"}
                         }
                     }
-                    watchKey = watchService.value.poll()
-                } while (watchKey != null)
-            } catch(e: ClosedWatchServiceException){
-                // if the file system goes offline, stop trying to monitor it
-                watchServices.remove(watchService.key)
+                }
             }
+        keepRunning = true
+        sendFilesStatus = sendFileRequests()
+    }
+
+    @Async
+    @Scheduled(fixedDelayString="\$filecontroller.poll.frequency")
+    private fun pollWatchers() {
+        if (keepRunning) {
+            var watchKey = watchService?.poll()
+            do {
+                watchKey?.pollEvents()?.forEach { event ->
+                    //remove duplicates and save to be processed
+                    if (event.kind().type() is Path) {
+                        val path = event.context() as Path
+                        //find all users watching this file and add the appropriate items to the queue
+                        watchedLocationRepository.findByPath(path.toAbsolutePath().toString()).forEach { location ->
+                            //remove already queued instances of this work item
+                            filesToUpdate.removeIf { it.uuid == location.uuid }
+                            filesToUpdate.put(QueueItem(location.uuid, path, location.userToken))
+                        }
+                    }
+                }
+                watchKey = watchService?.poll()
+            } while (watchKey != null)
         }
     }
 
     @Async
-    private fun sendFileRequests(){
-        //TODO: call central controller with items in queue, needs to be an infinite loop that continues to wait for new items in the queue
+    private fun sendFileRequests(): Future<Any>?{
+        val centralControllerProtocol = if (centralControllerSettings.useSSL) "https" else "http"
+        //for testing use a hostname verifier that doesn't do any verification
+        if ((centralControllerSettings.useSSL) && (centralControllerSettings.disableCertificateValidation)) {
+            trustSelfSignedSSL()
+            logger.warn { "SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
+        }
+
+        while (keepRunning){
+            //poll times out every POLL_TIMEOUT milliseconds to check to see if it should keep waiting
+            val item = filesToUpdate.poll(POLL_TIMEOUT, TimeUnit.MILLISECONDS)
+            if (item != null) {
+                //TODO: compress and encrypt file and add/update database entry
+                //TODO: get version of file back from central controller and store hashes of original and encrypted file
+
+                val centralControllerURL = "$centralControllerProtocol://${centralControllerSettings.host}:${centralControllerSettings.port}/files"
+                val requestHeaders = HttpHeaders()
+                requestHeaders.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer ${item.token}")
+                val requestParameters = LinkedMultiValueMap<String, Any>()
+                requestParameters.add("file", ClassPathResource(item.path.toString()))
+                requestParameters.add("uuid", item.uuid)
+                val httpEntity = HttpEntity<LinkedMultiValueMap<String, Any>>(requestParameters, requestHeaders)
+                val callResponse = RestTemplate().postForEntity(centralControllerURL, httpEntity, UUID::class.java)
+                if (callResponse.statusCode == HttpStatus.OK) {
+                    logger.debug { "File with local UUID ${item.uuid} uploaded and assigned remote UUID ${callResponse.body}" }
+                } else {
+                    logger.warn { "Error sending file with local UUID ${item.uuid} and path ${item.path}" }
+                    logger.warn { "Server returned ${callResponse.statusCode.name}" }
+                }
+            }
+        }
+        return null
     }
 
+    @PreDestroy
+    private fun destroyService(){
+        keepRunning = false
 
+    }
 
+    /**
+     * Rebuilds the watch service and restarts the async transfer service
+     *
+     * @return Returns false if the service is in the process of being destroyed or the transfer process doesn't shut down in 60 seconds
+     */
+    fun reloadWatchServices(): Boolean{
+        if (keepRunning) {
+            keepRunning = false
+            //wait for file transfer process to finish latest item or 59 seconds pass
+            var waitLimitTimer = 0
+            while (sendFilesStatus?.isDone == false) {
+                Thread.sleep(1000L)
+                waitLimitTimer++
+                if (waitLimitTimer > 59){
+                    //if 59 seconds pass then reset the keepRunning flag to true to let the processes continue, wait one more second to be sure it actually didn't exit in the moment the keepRunning value was set and then return false
+                    keepRunning = true
+                    Thread.sleep(1000L)
+                    if (sendFilesStatus?.isDone == false) {
+                        //current transfer is taking a while so the caller should try again later
+                        return false
+                    } else {
+                        //oops, looks like the function quit before it registered the keep running flag so let's restart as normal
+                        keepRunning = false
+                    }
+                }
+            }
+            initializeService()
+            return true
+        } else {
+            //service is already in the process of being shut down and can't be restarted
+            return false
+        }
+    }
 }

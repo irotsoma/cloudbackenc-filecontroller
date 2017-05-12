@@ -13,7 +13,9 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-
+/*
+ * Created by irotsoma on 8/4/2016.
+ */
 package com.irotsoma.cloudbackenc.filecontroller
 
 import java.security.cert.X509Certificate
@@ -22,9 +24,9 @@ import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
 /**
- * Created by irotsoma on 8/4/2016.
+ * Run before making a call to a server with a self signed certificate.
  *
- * Run before making a call to a server with a self signed certificate.  Should only be used for testing.
+ * Should only be used for testing.
  * From:  http://stackoverflow.com/a/7447273/1583160
  */
 

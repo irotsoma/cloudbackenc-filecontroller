@@ -20,7 +20,10 @@
 package com.irotsoma.cloudbackenc.filecontroller.files
 
 import java.util.*
-import javax.persistence.*
+import javax.persistence.Column
+import javax.persistence.Entity
+import javax.persistence.Id
+import javax.persistence.Table
 
 /**
  *
@@ -29,10 +32,14 @@ import javax.persistence.*
  */
 @Entity
 @Table(name="file")
-class WatchedLocation(@Column(name="path",nullable=false) var path: String,
-                      @Column(name="filter") var filter: String,
-                      @Column(name="last_updated",nullable=false) var lastUpdated: Date){
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long = -1
-}
+class WatchedLocation(@Id @Column(name="uuid", unique = true, nullable = false)var uuid: UUID,
+                      @Column(name="path",nullable=false) var path: String,
+                      @Column(name="recursive",nullable=false)var recursive: Boolean,
+                      @Column(name="filter", nullable = true) var filter: String?,
+                      @Column(name="last_updated",nullable=false) var lastUpdated: Date,
+                      @Column(name="user_token", nullable=false) var userToken: String,
+                      @Column(name="remote_uuid", nullable = true) var remoteUuid: UUID?,
+                      @Column(name="encryption_is_symmetric", nullable = false ) var encryptionIsSymmetric: Boolean,
+                      @Column(name="secret_key", nullable = false) var secretKey:String,
+                      @Column(name="public_key", nullable = true) var publicKey:String?,
+                      @Column(name="initialization_vector", nullable = true) var iv: ByteArray?)
