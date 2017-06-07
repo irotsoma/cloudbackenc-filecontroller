@@ -33,4 +33,5 @@ import org.springframework.context.annotation.Configuration
 class EncryptionServicesSettings {
     lateinit var directory: String
     lateinit var configFileName: String
+    lateinit var defaultServiceUuid: String
 }

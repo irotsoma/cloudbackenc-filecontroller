@@ -29,5 +29,6 @@ import java.util.*
  */
 interface StoredFileRepository: JpaRepository<StoredFile, Long> {
     fun findByPath(path:String): List<StoredFile>
-    fun findByPathAndWatchedLocationUuid(path:String,watchedLocationUuid:UUID): List<StoredFile>
+    fun findByUuid(uuid:UUID): StoredFile?
+    fun findByPathAndWatchedLocationUuid(path:String,watchedLocationUuid:UUID): StoredFile?
 }

@@ -44,6 +44,11 @@ databaseChangeLog:
                   constraints:
                     nullable: true
               - column:
+                  name: encryption_service_uuid
+                  type: uuid
+                  constraints:
+                    nullable: true
+              - column:
                   name: encryption_is_symmetric
                   type: boolean
                   constraints:
@@ -85,12 +90,17 @@ databaseChangeLog:
                   name: remote_uuid
                   type: uuid
                   constraints:
-                    nullable: false
+                    nullable: true
               - column:
                   name: last_updated
                   type: datetime
                   constraints:
                     nullable: false
+              - column:
+                  name: encryption_service_uuid
+                  type: uuid
+                  constraints:
+                    nullable: true
               - column:
                   name: encryption_is_symmetric
                   type: boolean

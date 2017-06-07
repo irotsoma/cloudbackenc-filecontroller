@@ -19,10 +19,13 @@
  */
 package com.irotsoma.cloudbackenc.filecontroller.data
 
+import com.irotsoma.cloudbackenc.common.compression.BzipFile
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
+import com.irotsoma.cloudbackenc.filecontroller.encryption.EncryptionServiceRepository
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
 import mu.KLogging
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.springframework.beans.factory.annotation.Autowired
@@ -56,9 +59,10 @@ import javax.annotation.PreDestroy
  */
 @Component
 class FileSystemWatcherService {
-    data class QueueItem(val uuid: UUID, val watchedLocationUuid:UUID, val path: Path, val token: String)
+    //data class QueueItem(val uuid: UUID, val watchedLocationUuid:UUID, val path: Path, val token: String)
     /** kotlin-logging implementation*/
     companion object: KLogging(){
+        /** Time to wait for a new poll event before checking if the service is shutting down. */
         private const val POLL_TIMEOUT = 5000L
     }
 
@@ -68,18 +72,18 @@ class FileSystemWatcherService {
     lateinit var centralControllerSettings: CentralControllerSettings
     @Autowired
     lateinit var storedFileRepository: StoredFileRepository
+    @Autowired
+    lateinit var encryptionServiceRepository: EncryptionServiceRepository
 
     var watchService: WatchService? = null
 
-    private val filesToUpdate = LinkedBlockingQueue<QueueItem>()
+    private val filesToUpdate = LinkedBlockingQueue<UUID>()
 
     @Volatile private var keepRunning = false
     var sendFilesStatus: Future<Any>? = null
 
     @PostConstruct
     fun initializeService(){
-
-
         watchService = FileSystems.getDefault().newWatchService()
         watchedLocationRepository.findAll()
             .forEach { watchedLocation ->
@@ -103,16 +107,23 @@ class FileSystemWatcherService {
                     }
                 }
                 fileList.forEach { watchedFile ->
-                    if ((watchedFile is File)){
-                        if ((watchedFile).canRead()) {
+                    if ((watchedFile is File) && (!watchedFile.isDirectory)) {
+                        if (watchedFile.canRead()){
                             //register the path with the watch service
                             watchedFile.toPath().register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY)
+                            var storedFile = storedFileRepository.findByPathAndWatchedLocationUuid(watchedFile.absolutePath, watchedLocation.uuid)
+                            //add the file to the database if it doesn't exist
+                            if (storedFile == null) {
+                                storedFile = StoredFile(UUID.randomUUID(), watchedLocation.uuid, watchedFile.absolutePath, null, Date(0L),watchedLocation.encryptionServiceUuid, watchedLocation.encryptionIsSymmetric, watchedLocation.secretKey, watchedLocation.publicKey, watchedLocation.iv)
+                                storedFileRepository.save(storedFile)
+                            }
+
                             //if the last modified date is greater than the one in the database then add the file to the queue to be updated at the cloud service
-                            storedFileRepository.findByPathAndWatchedLocationUuid(watchedFile.absolutePath,watchedLocation.uuid)
-                                    .filter { (watchedFile.lastModified() > it.lastUpdated.time) }
-                                    .forEach { filesToUpdate.put(QueueItem(it.uuid, watchedLocation.uuid, watchedFile.toPath().toAbsolutePath(), watchedLocation.user.userToken)) }
+                            if (watchedFile.lastModified() > storedFile.lastUpdated.time) {
+                                filesToUpdate.put(storedFile.uuid)
+                            }
                         } else {
-                            logger.debug{"Unable to access registered path: $watchedFile"}
+                            logger.debug { "Unable to access registered path: $watchedFile" }
                         }
                     }
                 }
@@ -133,19 +144,14 @@ class FileSystemWatcherService {
                         val path = event.context() as Path
                         //find all users watching this file and add the appropriate items to the queue
                         storedFileRepository.findByPath(path.toAbsolutePath().toString()).forEach { file ->
-                            val watchedLocation = watchedLocationRepository.findByUuid(file.watchedLocationUuid)
-                            if (watchedLocation == null){
-                                logger.debug { "Watched location with UUID ${file.watchedLocationUuid} does not exist for stored file UUID: ${file.uuid}" }
-                            } else {
-                                //remove already queued instances of this work item to help with files that are being changed often making it wait until later if there are other queued items
-                                filesToUpdate.removeIf { (uuid) -> uuid == file.uuid }
-                                filesToUpdate.put(QueueItem(file.uuid, file.watchedLocationUuid, path, watchedLocation.user.userToken))
-                            }
+                            //remove already queued instances of this work item to help with files that are being changed often making it wait until later if there are other queued items
+                            filesToUpdate.removeIf { uuid -> uuid == file.uuid }
+                            filesToUpdate.put(file.uuid)
                         }
                     }
                 }
                 watchKey = watchService?.poll()
-            } 
+            }
         }
     }
 
@@ -160,25 +166,48 @@ class FileSystemWatcherService {
 
         while (keepRunning){
             //poll times out every POLL_TIMEOUT milliseconds to check to see if it should keep waiting
-            val item = filesToUpdate.poll(POLL_TIMEOUT, TimeUnit.MILLISECONDS)
-            if (item != null) {
+            val fileUuid = filesToUpdate.poll(POLL_TIMEOUT, TimeUnit.MILLISECONDS)
+            if (fileUuid != null) {
                 //TODO: compress and encrypt file and add/update database entry
                 //TODO: get version of file back from central controller and store hashes of original and encrypted file
+                val storedFile = storedFileRepository.findByUuid(fileUuid)
+                if (storedFile != null) {
 
-                val centralControllerURL = "$centralControllerProtocol://${centralControllerSettings.host}:${centralControllerSettings.port}/files"
-                val requestHeaders = HttpHeaders()
-                requestHeaders.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer ${item.token}")
-                val requestParameters = LinkedMultiValueMap<String, Any>()
-                requestParameters.add("file", ClassPathResource(item.path.toString()))
-                requestParameters.add("uuid", item.uuid)
-                val httpEntity = HttpEntity<LinkedMultiValueMap<String, Any>>(requestParameters, requestHeaders)
-                val callResponse = RestTemplate().postForEntity(centralControllerURL, httpEntity, UUID::class.java)
-                if (callResponse.statusCode == HttpStatus.OK) {
-                    logger.debug { "File with local UUID ${item.uuid} uploaded and assigned remote UUID ${callResponse.body}" }
-                } else {
-                    logger.warn { "Error sending file with local UUID ${item.uuid} and path ${item.path}" }
-                    logger.warn { "Server returned ${callResponse.statusCode.name}" }
+                    val compressedFile = File.createTempFile(FilenameUtils.getName(storedFile.path), ".tmp")
+                    BzipFile().compressFile(File(storedFile.path), compressedFile)
+                    val encryptionServiceUuid = storedFile.encryptionServiceUuid ?: encryptionServiceRepository.encryptionServicesSettings.defaultServiceUuid
+                    val watchedLocation = watchedLocationRepository.findByUuid(storedFile.watchedLocationUuid)
+
+
+
+                    //TODO: encryption here
+                    //encryptionServiceRepository.encryptionServiceExtensions.get()
+
+
+
+
+
+
+
+
+                    val centralControllerURL = "$centralControllerProtocol://${centralControllerSettings.host}:${centralControllerSettings.port}/files"
+                    val requestHeaders = HttpHeaders()
+                    requestHeaders.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer ${watchedLocation?.user?.userToken}")
+                    val requestParameters = LinkedMultiValueMap<String, Any>()
+                    requestParameters.add("file", ClassPathResource(storedFile.path))
+                    requestParameters.add("uuid", fileUuid)
+                    val httpEntity = HttpEntity<LinkedMultiValueMap<String, Any>>(requestParameters, requestHeaders)
+                    val callResponse = RestTemplate().postForEntity(centralControllerURL, httpEntity, UUID::class.java)
+                    if (callResponse.statusCode == HttpStatus.OK) {
+                        logger.debug { "File with local UUID $fileUuid uploaded and assigned remote UUID ${callResponse.body}" }
+                    } else {
+                        logger.warn { "Error sending file with local UUID $fileUuid and path ${storedFile.path}" }
+                        logger.warn { "Server returned ${callResponse.statusCode.name}" }
+                    }
+                } else{
+
+                    //TODO: handle stored file uuid is not in DB
                 }
             }
         }
