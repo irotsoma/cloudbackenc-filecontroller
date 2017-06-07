@@ -20,7 +20,7 @@ databaseChangeLog:
       author: irotsoma
       changes:
         - createTable:
-            tableName: file
+            tableName: watched_location
               - column:
                   name: uuid
                   type: uuid
@@ -37,25 +37,58 @@ databaseChangeLog:
                   type: boolean
                   defaultValueBoolean: true
                   constraints:
-                    nullable: false
+                    nullable: true
               - column:
                   name: filter
                   type: nvarchar(max)
                   constraints:
                     nullable: true
               - column:
-                  name: last_updated
-                  type: datetime
+                  name: encryption_is_symmetric
+                  type: boolean
                   constraints:
                     nullable: false
               - column:
-                  name: user_token
+                  name: secret_key
+                  type: nvarchar(max)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: public_key
+                  type: nvarchar(max)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: initialization_vector
+                  type: varbinary(max)
+                  constraints:
+                    nullable: true
+        - createTable:
+            tableName: stored_file
+              - column:
+                  name: uuid
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: watched_location_uuid
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: path
                   type: nvarchar(max)
                   constraints:
                     nullable: false
               - column:
                   name: remote_uuid
                   type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_updated
+                  type: datetime
                   constraints:
                     nullable: false
               - column:
@@ -78,3 +111,21 @@ databaseChangeLog:
                   type: varbinary(max)
                   constraints:
                     nullable: true
+        - createTable:
+            tableName: central_controller_user
+              - column:
+                  name: id
+                  type: int
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: username
+                  type: nvarchar(max)
+                  contraints:
+                    nullable: false
+              - column:
+                  name: user_token
+                  type: nvarchar(max)
+                  constraints:
+                    nullable: false

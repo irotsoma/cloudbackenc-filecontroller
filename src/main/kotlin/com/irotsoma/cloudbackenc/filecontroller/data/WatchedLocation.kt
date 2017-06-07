@@ -14,16 +14,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-/**
+/*
  * Created by irotsoma on 4/27/17.
  */
-package com.irotsoma.cloudbackenc.filecontroller.files
+package com.irotsoma.cloudbackenc.filecontroller.data
 
 import java.util.*
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.Id
-import javax.persistence.Table
+import javax.persistence.*
 
 /**
  *
@@ -31,15 +28,16 @@ import javax.persistence.Table
  * @author Justin Zak
  */
 @Entity
-@Table(name="file")
+@Table(name="watched_location")
 class WatchedLocation(@Id @Column(name="uuid", unique = true, nullable = false)var uuid: UUID,
                       @Column(name="path",nullable=false) var path: String,
-                      @Column(name="recursive",nullable=false)var recursive: Boolean,
+                      @Column(name="recursive",nullable=true)var recursive: Boolean?,
                       @Column(name="filter", nullable = true) var filter: String?,
-                      @Column(name="last_updated",nullable=false) var lastUpdated: Date,
-                      @Column(name="user_token", nullable=false) var userToken: String,
-                      @Column(name="remote_uuid", nullable = true) var remoteUuid: UUID?,
                       @Column(name="encryption_is_symmetric", nullable = false ) var encryptionIsSymmetric: Boolean,
                       @Column(name="secret_key", nullable = false) var secretKey:String,
                       @Column(name="public_key", nullable = true) var publicKey:String?,
-                      @Column(name="initialization_vector", nullable = true) var iv: ByteArray?)
+                      @Column(name="initialization_vector", nullable = true) var iv: ByteArray?){
+    @ManyToOne(fetch=FetchType.EAGER)
+    @JoinColumn(name="user_id", referencedColumnName="id")
+    lateinit var user:CentralControllerUser
+}

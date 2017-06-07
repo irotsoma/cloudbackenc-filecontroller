@@ -15,18 +15,19 @@
  */
 
 /**
- * Created by irotsoma on 4/27/17.
+ * Created by irotsoma on 6/7/17.
  */
-package com.irotsoma.cloudbackenc.filecontroller.files
+package com.irotsoma.cloudbackenc.filecontroller.data
 
 import org.springframework.data.jpa.repository.JpaRepository
+import java.util.*
 
 /**
  *
  *
  * @author Justin Zak
  */
-interface WatchedLocationRepository: JpaRepository<WatchedLocation, Long>{
-    fun findByPath(path:String): List<WatchedLocation>
-
+interface StoredFileRepository: JpaRepository<StoredFile, Long> {
+    fun findByPath(path:String): List<StoredFile>
+    fun findByPathAndWatchedLocationUuid(path:String,watchedLocationUuid:UUID): List<StoredFile>
 }

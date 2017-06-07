@@ -14,10 +14,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-/**
+/*
  * Created by irotsoma on 4/26/17.
  */
-package com.irotsoma.cloudbackenc.filecontroller.files
+package com.irotsoma.cloudbackenc.filecontroller.data
 
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
@@ -56,7 +56,7 @@ import javax.annotation.PreDestroy
  */
 @Component
 class FileSystemWatcherService {
-    data class QueueItem(val uuid: UUID, val path: Path, val token: String)
+    data class QueueItem(val uuid: UUID, val watchedLocationUuid:UUID, val path: Path, val token: String)
     /** kotlin-logging implementation*/
     companion object: KLogging(){
         private const val POLL_TIMEOUT = 5000L
@@ -66,6 +66,8 @@ class FileSystemWatcherService {
     lateinit var watchedLocationRepository: WatchedLocationRepository
     @Autowired
     lateinit var centralControllerSettings: CentralControllerSettings
+    @Autowired
+    lateinit var storedFileRepository: StoredFileRepository
 
     var watchService: WatchService? = null
 
@@ -81,24 +83,34 @@ class FileSystemWatcherService {
         watchService = FileSystems.getDefault().newWatchService()
         watchedLocationRepository.findAll()
             .forEach { watchedLocation ->
+                val fileList = mutableListOf<File>()
                 val filter = WildcardFileFilter(if (watchedLocation.filter.isNullOrBlank()) {"*"} else{ watchedLocation.filter })
-                //val directoryStream = Files.newDirectoryStream(Paths.get(watchedLocation.path), filter)
-                val files =
-                    if (watchedLocation.recursive) {
-                        FileUtils.listFiles(File(watchedLocation.path), filter, TrueFileFilter.INSTANCE)
-                    } else {
-                        FileUtils.listFiles(File(watchedLocation.path), filter, null)
+                val watchedLocationFile = File(watchedLocation.path)
+                if (watchedLocationFile.isDirectory) {
+                    val files =
+                            if (watchedLocation.recursive ?: false) {
+                                FileUtils.listFiles(File(watchedLocation.path), filter, TrueFileFilter.INSTANCE)
+                            } else {
+                                FileUtils.listFiles(File(watchedLocation.path), filter, null)
+                            }
+                    files
+                            .filterIsInstance<File>()
+                            .filterTo(fileList) { it.exists() }
+                } else {
+                    val file = File(watchedLocation.path)
+                    if (file.exists()){
+                        fileList.add(file)
                     }
-
-                files.forEach { watchedFile ->
+                }
+                fileList.forEach { watchedFile ->
                     if ((watchedFile is File)){
                         if ((watchedFile).canRead()) {
                             //register the path with the watch service
                             watchedFile.toPath().register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY)
                             //if the last modified date is greater than the one in the database then add the file to the queue to be updated at the cloud service
-                            if (watchedFile.lastModified() > watchedLocation.lastUpdated.time) {
-                                filesToUpdate.put(QueueItem(watchedLocation.uuid, watchedFile.toPath().toAbsolutePath(), watchedLocation.userToken))
-                            }
+                            storedFileRepository.findByPathAndWatchedLocationUuid(watchedFile.absolutePath,watchedLocation.uuid)
+                                    .filter { (watchedFile.lastModified() > it.lastUpdated.time) }
+                                    .forEach { filesToUpdate.put(QueueItem(it.uuid, watchedLocation.uuid, watchedFile.toPath().toAbsolutePath(), watchedLocation.user.userToken)) }
                         } else {
                             logger.debug{"Unable to access registered path: $watchedFile"}
                         }
@@ -114,21 +126,26 @@ class FileSystemWatcherService {
     private fun pollWatchers() {
         if (keepRunning) {
             var watchKey = watchService?.poll()
-            do {
-                watchKey?.pollEvents()?.forEach { event ->
+            while (watchKey != null) {
+                watchKey.pollEvents().forEach { event ->
                     //remove duplicates and save to be processed
                     if (event.kind().type() is Path) {
                         val path = event.context() as Path
                         //find all users watching this file and add the appropriate items to the queue
-                        watchedLocationRepository.findByPath(path.toAbsolutePath().toString()).forEach { location ->
-                            //remove already queued instances of this work item
-                            filesToUpdate.removeIf { it.uuid == location.uuid }
-                            filesToUpdate.put(QueueItem(location.uuid, path, location.userToken))
+                        storedFileRepository.findByPath(path.toAbsolutePath().toString()).forEach { file ->
+                            val watchedLocation = watchedLocationRepository.findByUuid(file.watchedLocationUuid)
+                            if (watchedLocation == null){
+                                logger.debug { "Watched location with UUID ${file.watchedLocationUuid} does not exist for stored file UUID: ${file.uuid}" }
+                            } else {
+                                //remove already queued instances of this work item to help with files that are being changed often making it wait until later if there are other queued items
+                                filesToUpdate.removeIf { (uuid) -> uuid == file.uuid }
+                                filesToUpdate.put(QueueItem(file.uuid, file.watchedLocationUuid, path, watchedLocation.user.userToken))
+                            }
                         }
                     }
                 }
                 watchKey = watchService?.poll()
-            } while (watchKey != null)
+            } 
         }
     }
 
