@@ -40,6 +40,7 @@ import javax.annotation.PostConstruct
  *
  * Imports and stores information about installed Encryption Service Extensions
  */
+
 @Component
 class EncryptionServiceRepository : ApplicationContextAware {
     /** kotlin-logging implementation*/
@@ -53,6 +54,7 @@ class EncryptionServiceRepository : ApplicationContextAware {
     override fun setApplicationContext(applicationContext: ApplicationContext?) {
         _applicationContext = applicationContext as ConfigurableApplicationContext? ?: throw EncryptionServiceException("Application context in EncryptionServiceRepository is null.")
     }
+    var classLoader:URLClassLoader? = null
 
     @PostConstruct
     fun loadDynamicServices() {
@@ -106,11 +108,11 @@ class EncryptionServiceRepository : ApplicationContextAware {
             }
         }
         //create a class loader with all of the jars
-        val classLoader = URLClassLoader(jarURLs.values.toTypedArray(), _applicationContext.classLoader)
+        classLoader = URLClassLoader(jarURLs.values.toTypedArray(), _applicationContext.classLoader)
         //cycle through all of the classes, make sure they inheritors EncryptionServiceFactory, and add them to the list
         for ((key, value) in factoryClasses) {
             try{
-                val gdClass = classLoader.loadClass(value.canonicalName)
+                val gdClass = classLoader!!.loadClass(value.canonicalName)
                 //verify instance of gdClass is a EncryptionServiceFactory
                 if (gdClass.newInstance() is EncryptionServiceFactory) {
                     //add to list -- suppress warning about unchecked class as we did that in the if statement for an instance but it can't be done directly
@@ -123,6 +125,7 @@ class EncryptionServiceRepository : ApplicationContextAware {
                 logger.warn{"Error loading encryption service extension: $value: ${e.message}"}
             }
         }
+
     }
 }
 

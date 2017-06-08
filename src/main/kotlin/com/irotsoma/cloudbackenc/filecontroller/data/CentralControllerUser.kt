@@ -22,9 +22,12 @@ package com.irotsoma.cloudbackenc.filecontroller.data
 import javax.persistence.*
 
 /**
- *
+ * JPA object representing a user with credentials for logging into the central controller
  *
  * @author Justin Zak
+ * @property id Database-generated ID for the user.
+ * @property username Username of the central controller user
+ * @property userToken A token to be used for logging in to the central controller
  */
 @Entity
 @Table(name="central_controller_user")

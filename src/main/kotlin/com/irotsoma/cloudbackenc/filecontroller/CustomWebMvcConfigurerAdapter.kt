@@ -34,7 +34,9 @@ import java.util.*
 @Configuration
 class CustomWebMvcConfigurerAdapter : WebMvcConfigurerAdapter() {
 
-    //internationalization beans
+    /**
+     * Resolves the current locale defaulting to US
+     */
     @Bean
     fun localeResolver(): LocaleResolver {
         val slr = SessionLocaleResolver()
@@ -42,15 +44,11 @@ class CustomWebMvcConfigurerAdapter : WebMvcConfigurerAdapter() {
         return slr
     }
 
-    @Bean
-    fun localeChangeInterceptor(): LocaleChangeInterceptor {
-        val localeChangeInterceptor = LocaleChangeInterceptor()
-        localeChangeInterceptor.paramName = "locale"
-        return localeChangeInterceptor
-    }
-
+    /**
+     * Adds a locale change interceptor to the registry
+     */
     override fun addInterceptors(registry: InterceptorRegistry?) {
-        registry?.addInterceptor(localeChangeInterceptor())
+        registry?.addInterceptor(LocaleChangeInterceptor())
         super.addInterceptors(registry)
     }
 }
