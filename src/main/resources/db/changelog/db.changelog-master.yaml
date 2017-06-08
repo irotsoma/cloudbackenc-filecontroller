@@ -54,6 +54,21 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: encryption_algorithm
+                  type: nvarchar(max)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: encryption_key_algorithm
+                  type: nvarchar(max)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: encryption_block_size
+                  type: nvarchar(max)
+                  constraints:
+                    nullable: false
+              - column:
                   name: secret_key
                   type: nvarchar(max)
                   constraints:
@@ -64,7 +79,7 @@ databaseChangeLog:
                   constraints:
                     nullable: true
               - column:
-                  name: initialization_vector
+                  name: initialization_vector_parameter_spec
                   type: varbinary(max)
                   constraints:
                     nullable: true
@@ -87,40 +102,10 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: remote_uuid
-                  type: uuid
-                  constraints:
-                    nullable: true
-              - column:
                   name: last_updated
                   type: datetime
                   constraints:
                     nullable: false
-              - column:
-                  name: encryption_service_uuid
-                  type: uuid
-                  constraints:
-                    nullable: true
-              - column:
-                  name: encryption_is_symmetric
-                  type: boolean
-                  constraints:
-                    nullable: false
-              - column:
-                  name: secret_key
-                  type: nvarchar(max)
-                  constraints:
-                    nullable: false
-              - column:
-                  name: public_key
-                  type: nvarchar(max)
-                  constraints:
-                    nullable: true
-              - column:
-                  name: initialization_vector
-                  type: varbinary(max)
-                  constraints:
-                    nullable: true
         - createTable:
             tableName: central_controller_user
               - column:
@@ -139,3 +124,66 @@ databaseChangeLog:
                   type: nvarchar(max)
                   constraints:
                     nullable: false
+        - createTable:
+            tableName: stored_file_version
+              - column:
+                  name: id
+                  type: int
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: stored_file_uuid
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: remote_file_uuid
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: encryption_service_uuid
+                  type: uuid
+                  constraints:
+                    nullable: true
+              - column:
+                  name: encryption_is_symmetric
+                  type: boolean
+                  constraints:
+                    nullable: false
+              - column:
+                  name: encryption_algorithm
+                  type: nvarchar(max)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: encryption_key_algorithm
+                  type: nvarchar(max)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: encryption_block_size
+                  type: nvarchar(max)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: secret_key
+                  type: nvarchar(max)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: public_key
+                  type: nvarchar(max)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: initialization_vector
+                  type: varbinary(max)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: timestamp
+                  type: datetime
+                  constraints:
+                    nullable: true

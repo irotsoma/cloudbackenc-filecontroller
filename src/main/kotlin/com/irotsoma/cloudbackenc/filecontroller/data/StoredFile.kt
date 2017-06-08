@@ -20,10 +20,7 @@
 package com.irotsoma.cloudbackenc.filecontroller.data
 
 import java.util.*
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.Id
-import javax.persistence.Table
+import javax.persistence.*
 
 /**
  *
@@ -35,10 +32,8 @@ import javax.persistence.Table
 class StoredFile(@Id @Column(name="uuid", unique = true, nullable = false)var uuid: UUID,
                  @Column(name="watched_location_uuid", nullable = false)var watchedLocationUuid: UUID,
                  @Column(name="path", nullable=false) var path: String,
-                 @Column(name="remote_uuid", nullable=true) var remoteUuid: UUID?,
-                 @Column(name="last_updated", nullable=false) var lastUpdated: Date,
-                 @Column(name="encryption_service_uuid", nullable= true)var encryptionServiceUuid: UUID?,
-                 @Column(name="encryption_is_symmetric", nullable = false ) var encryptionIsSymmetric: Boolean,
-                 @Column(name="secret_key", nullable = false) var secretKey:String,
-                 @Column(name="public_key", nullable = true) var publicKey:String?,
-                 @Column(name="initialization_vector", nullable = true) var iv: ByteArray?)
+                 @Column(name="last_updated", nullable=false) var lastUpdated: Date){
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name="uuid", referencedColumnName="stored_file_uuid")
+    var storedFileVersions: HashSet<StoredFileVersion> = HashSet()
+}
