@@ -20,6 +20,36 @@ databaseChangeLog:
       author: irotsoma
       changes:
         - createTable:
+            tableName: user_account
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: username
+                  type: nvarchar(max)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: token
+                  type: nvarchar(max)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: token_expiration
+                  type: datetime
+                  constraints:
+                    nullable: true
+  - changeSet:
+      id: 2
+      author: irotsoma
+      changes:
+        - createTable:
             tableName: watched_location
               - column:
                   name: uuid
@@ -104,24 +134,6 @@ databaseChangeLog:
               - column:
                   name: last_updated
                   type: datetime
-                  constraints:
-                    nullable: false
-        - createTable:
-            tableName: central_controller_user
-              - column:
-                  name: id
-                  type: int
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-              - column:
-                  name: username
-                  type: nvarchar(max)
-                  contraints:
-                    nullable: false
-              - column:
-                  name: user_token
-                  type: nvarchar(max)
                   constraints:
                     nullable: false
         - createTable:

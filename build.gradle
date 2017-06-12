@@ -109,6 +109,10 @@ dependencies {
     compile "io.github.microutils:kotlin-logging:$kotlinLoggingVersion"
     //apache
     compile "org.apache.commons:commons-io:$commonsIoVersion"
+    //h2
+    compile 'com.h2database:h2'
+    //mariaDb
+    compile 'org.mariadb.jdbc:mariadb-java-client'
     //test
     testCompile 'org.springframework.boot:spring-boot-starter-test'
 }
