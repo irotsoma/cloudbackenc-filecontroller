@@ -19,7 +19,7 @@
  */
 package com.irotsoma.cloudbackenc.filecontroller.tasks
 
-import com.irotsoma.cloudbackenc.common.compression.BzipFile
+//import com.irotsoma.cloudbackenc.filecontroller.encryption.BzipFile
 import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionServiceAsymmetricEncryptionAlgorithms
 import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionServiceEncryptionAlgorithms
 import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionServiceFactory
@@ -29,6 +29,7 @@ import com.irotsoma.cloudbackenc.filecontroller.data.StoredFile
 import com.irotsoma.cloudbackenc.filecontroller.data.StoredFileRepository
 import com.irotsoma.cloudbackenc.filecontroller.data.StoredFileVersion
 import com.irotsoma.cloudbackenc.filecontroller.data.WatchedLocationRepository
+import com.irotsoma.cloudbackenc.filecontroller.encryption.BzipFile
 import com.irotsoma.cloudbackenc.filecontroller.encryption.EncryptionServiceRepository
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
 import mu.KLogging
