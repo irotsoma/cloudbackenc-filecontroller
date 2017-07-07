@@ -177,7 +177,7 @@ class FileSystemWatcherService {
         //for testing use a hostname verifier that doesn't do any verification
         if ((centralControllerSettings.useSSL) && (centralControllerSettings.disableCertificateValidation)) {
             trustSelfSignedSSL()
-            logger.warn { "SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
+            logger.warn { "Central Controller SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
         }
         val encryptionFactoryClasses = HashMap<UUID, EncryptionServiceFactory?>()
         val secureRandom = SecureRandom.getInstanceStrong()

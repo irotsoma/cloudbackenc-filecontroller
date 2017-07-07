@@ -15,20 +15,17 @@
  */
 
 /*
- * Created by irotsoma on 6/7/17.
+ * Created by irotsoma on 7/7/17.
  */
 package com.irotsoma.cloudbackenc.filecontroller.data
 
 import org.springframework.data.jpa.repository.JpaRepository
-import java.util.*
 
 /**
  *
  *
  * @author Justin Zak
  */
-interface StoredFileRepository: JpaRepository<StoredFile, Long> {
-    fun findByPath(path:String): List<StoredFile>
-    fun findByUuid(uuid:UUID): StoredFile?
-    fun findByPathAndWatchedLocationUuid(path:String,watchedLocationUuid:UUID): StoredFile?
+interface CentralControllerUserRepository: JpaRepository<CentralControllerUser, Long>{
+    fun findByUserTokenNotNull(): List<CentralControllerUser>?
 }

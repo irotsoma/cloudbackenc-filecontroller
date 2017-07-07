@@ -48,4 +48,8 @@ class CentralControllerSettings {
      * Disables SSL certificate validation.  Should only be true for testing purposes with self signed certificates.
      */
     var disableCertificateValidation: Boolean = false
+    /**
+     * How often should central controller tokens be refreshed.  Default 1 day (86400000 ms)
+     */
+    var tokenRefreshInterval: Int = 86400000
 }
