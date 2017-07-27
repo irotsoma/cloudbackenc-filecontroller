@@ -16,7 +16,7 @@
 /*
  * Created by irotsoma on 10/31/2016.
  */
-package com.irotsoma.cloudbackenc.filecontroller.controllers
+package com.irotsoma.cloudbackenc.filecontroller.webui.controllers
 
 import com.irotsoma.cloudbackenc.common.RestException
 import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionServiceException

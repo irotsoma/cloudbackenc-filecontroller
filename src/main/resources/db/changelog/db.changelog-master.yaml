@@ -20,7 +20,7 @@ databaseChangeLog:
       author: irotsoma
       changes:
         - createTable:
-            tableName: user_account
+            tableName: central_controller_user
             columns:
               - column:
                   name: id
@@ -39,7 +39,7 @@ databaseChangeLog:
                   name: token
                   type: nvarchar(max)
                   constraints:
-                    nullable: false
+                    nullable: true
               - column:
                   name: token_expiration
                   type: datetime
@@ -51,11 +51,17 @@ databaseChangeLog:
       changes:
         - createTable:
             tableName: watched_location
+            columns:
               - column:
                   name: uuid
                   type: uuid
                   constraints:
                     primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: long
+                  constraints:
                     nullable: false
               - column:
                   name: path
@@ -115,6 +121,7 @@ databaseChangeLog:
                     nullable: true
         - createTable:
             tableName: stored_file
+            columns:
               - column:
                   name: uuid
                   type: uuid
@@ -138,6 +145,7 @@ databaseChangeLog:
                     nullable: false
         - createTable:
             tableName: stored_file_version
+            columns:
               - column:
                   name: id
                   type: int

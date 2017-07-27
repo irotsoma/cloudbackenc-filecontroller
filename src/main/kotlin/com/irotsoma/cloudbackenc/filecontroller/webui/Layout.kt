@@ -13,30 +13,31 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-/*
- * Created by irotsoma on 10/31/2016.
- */
-package com.irotsoma.cloudbackenc.filecontroller.controllers
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Primary
+/*
+ * Created by irotsoma on 7/21/17.
+ */
+package com.irotsoma.cloudbackenc.filecontroller.webui
+
+import com.samskivert.mustache.Mustache
+import com.samskivert.mustache.Template.Fragment
+import java.io.Writer
+
 
 /**
- * A bean to register the Kotlin module for Jackson
+ * Layout object to remove the need for the explicit {{>layout}} in mustache templates
  *
  * @author Justin Zak
  */
-@Configuration
-class ObjectMapperConfiguration {
-    /**
-     * Function to generate the necessary Jackson factories for parsing JSON
-     */
-    @Bean
-    @Primary
-    open fun objectMapper() = ObjectMapper().apply {
-        registerModule(KotlinModule())
+class Layout(private val compiler: Mustache.Compiler) : Mustache.Lambda {
+
+    var body: String = ""
+
+    var title = "CloudBackEnc"
+
+    override fun execute(frag: Fragment, out: Writer) {
+        body = frag.execute()
+        compiler.compile("{{>layout}}").execute(frag.context(), out)
     }
+
 }

@@ -59,21 +59,22 @@ class EncryptionServiceRepository : ApplicationContextAware {
     @PostConstruct
     fun loadDynamicServices() {
         //external config extension directory
-        val extensionsDirectory: File = File(encryptionServicesSettings.directory)
+        val extensionsDirectory: File? = File(encryptionServicesSettings.directory)
         //internal resources extension directory (packaged extensions or test extensions)
-        val resourcesExtensionsDirectory: File? = File(javaClass.classLoader.getResource("extensions").file)
-        if ((!extensionsDirectory.isDirectory || !extensionsDirectory.canRead()) && ((!(resourcesExtensionsDirectory?.isDirectory ?: false) || !(resourcesExtensionsDirectory?.canRead() ?: false)))) {
+        val resourcesExtensionsDirectory: File? = try{ File(javaClass.classLoader.getResource("extensions")?.file) }
+                                                  catch (ignore: NullPointerException) { null }
+        if ((!(extensionsDirectory?.isDirectory ?: false) || !(extensionsDirectory?.canRead() ?: false)) && ((!(resourcesExtensionsDirectory?.isDirectory ?: false) || !(resourcesExtensionsDirectory?.canRead() ?: false)))) {
             logger.warn{"Extensions directory is missing or unreadable."}
-            logger.debug{"Config directory: ${extensionsDirectory.absolutePath}"}
+            logger.debug{"Config directory: ${extensionsDirectory?.absolutePath}"}
             logger.debug{"Resource directory: ${resourcesExtensionsDirectory?.absolutePath}"}
             return
         }
-        logger.trace{"Config extension directory:  ${extensionsDirectory.absolutePath}"}
+        logger.trace{"Config extension directory:  ${extensionsDirectory?.absolutePath}"}
         logger.trace{"Resources extension directory:  ${resourcesExtensionsDirectory?.absolutePath}"}
-        val jarURLs : HashMap<UUID,URL> = HashMap()
-        val factoryClasses: HashMap<UUID, VersionedExtensionFactoryClass> = HashMap()
+        val jarURLs = hashMapOf<UUID,URL>()
+        val factoryClasses = hashMapOf<UUID, VersionedExtensionFactoryClass>()
 
-        for (jar in (extensionsDirectory.listFiles{directory, name -> (!File(directory,name).isDirectory && name.endsWith(".jar"))} ?: arrayOf<File>()).plus(resourcesExtensionsDirectory?.listFiles{directory, name -> (!File(directory,name).isDirectory && name.endsWith(".jar"))} ?: arrayOf<File>())) {
+        for (jar in (extensionsDirectory?.listFiles{directory, name -> (!File(directory,name).isDirectory && name.endsWith(".jar"))} ?: arrayOf<File>()).plus(resourcesExtensionsDirectory?.listFiles{directory, name -> (!File(directory,name).isDirectory && name.endsWith(".jar"))} ?: arrayOf<File>())) {
             try {
                 val jarFile = JarFile(jar)
                 //read config file from jar if present

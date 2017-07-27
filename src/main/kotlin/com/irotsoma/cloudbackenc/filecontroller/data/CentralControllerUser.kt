@@ -19,6 +19,7 @@
  */
 package com.irotsoma.cloudbackenc.filecontroller.data
 
+import java.util.*
 import javax.persistence.*
 
 /**
@@ -27,12 +28,13 @@ import javax.persistence.*
  * @author Justin Zak
  * @property id Database-generated ID for the user.
  * @property username Username of the central controller user
- * @property userToken A token to be used for logging in to the central controller
+ * @property token A token to be used for logging in to the central controller
  */
 @Entity
 @Table(name="central_controller_user")
 class CentralControllerUser(@Column(name="username", nullable=false) var username: String,
-                            @Column(name="user_token", nullable=false) var userToken: String) {
+                            @Column(name="token", nullable=true) var token: String?,
+                            @Column(name="token_expiration", nullable=true) var tokenExpiration: Date?){
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = -1

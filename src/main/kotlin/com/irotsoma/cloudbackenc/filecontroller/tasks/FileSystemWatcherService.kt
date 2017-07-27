@@ -25,10 +25,7 @@ import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionSer
 import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionServiceFactory
 import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionServiceSymmetricEncryptionAlgorithms
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
-import com.irotsoma.cloudbackenc.filecontroller.data.StoredFile
-import com.irotsoma.cloudbackenc.filecontroller.data.StoredFileRepository
-import com.irotsoma.cloudbackenc.filecontroller.data.StoredFileVersion
-import com.irotsoma.cloudbackenc.filecontroller.data.WatchedLocationRepository
+import com.irotsoma.cloudbackenc.filecontroller.data.*
 import com.irotsoma.cloudbackenc.filecontroller.encryption.BzipFile
 import com.irotsoma.cloudbackenc.filecontroller.encryption.EncryptionServiceRepository
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
@@ -43,7 +40,6 @@ import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import org.springframework.scheduling.annotation.Async
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.util.LinkedMultiValueMap
@@ -60,7 +56,6 @@ import java.security.spec.X509EncodedKeySpec
 import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.TimeUnit
 import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
 import javax.crypto.spec.IvParameterSpec
@@ -73,6 +68,7 @@ import kotlin.collections.HashMap
  *
  * @author Justin Zak
  */
+
 @Component
 class FileSystemWatcherService {
     //data class QueueItem(val uuid: UUID, val watchedLocationUuid:UUID, val path: Path, val token: String)
@@ -89,6 +85,8 @@ class FileSystemWatcherService {
     @Autowired
     lateinit var storedFileRepository: StoredFileRepository
     @Autowired
+    lateinit var storedFileVersionRepository: StoredFileVersionRepository
+    @Autowired
     lateinit var encryptionServiceRepository: EncryptionServiceRepository
 
     var watchService: WatchService? = null
@@ -96,7 +94,7 @@ class FileSystemWatcherService {
     private val filesToUpdate = LinkedBlockingQueue<UUID>()
 
     @Volatile private var keepRunning = false
-    var sendFilesStatus: Future<Any>? = null
+    private val runningSendProcesses = mutableListOf<UUID>()
 
     @PostConstruct
     fun initializeService(){
@@ -145,13 +143,17 @@ class FileSystemWatcherService {
                 }
             }
         keepRunning = true
-        sendFilesStatus = sendFileRequests()
     }
 
-    @Async
-    @Scheduled(fixedDelayString="\$filecontroller.poll.frequency")
-    private fun pollWatchers() {
+
+    @Scheduled(initialDelay = 1000, fixedDelayString="\${filecontroller.poll.frequency}")
+    fun pollWatchers(): Future<Any>? {
+        var filesChanged = 0L
+        val processUuid = UUID.randomUUID()
+        logger.debug{"Async process -- pollWatcher $processUuid: Executing poll watcher function."  }
+
         if (keepRunning) {
+
             var watchKey = watchService?.poll()
             while (watchKey != null) {
                 watchKey.pollEvents().forEach { event ->
@@ -165,26 +167,33 @@ class FileSystemWatcherService {
                             filesToUpdate.put(file.uuid)
                         }
                     }
+                    filesChanged++
                 }
                 watchKey = watchService?.poll()
             }
         }
+        logger.trace {"Async process -- pollWatcher $processUuid: Process finished.  Files added to queue: $filesChanged."}
+        return null
     }
 
-    @Async
-    private fun sendFileRequests(): Future<Any>?{
-        val centralControllerProtocol = if (centralControllerSettings.useSSL) "https" else "http"
-        //for testing use a hostname verifier that doesn't do any verification
-        if ((centralControllerSettings.useSSL) && (centralControllerSettings.disableCertificateValidation)) {
-            trustSelfSignedSSL()
-            logger.warn { "Central Controller SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
-        }
-        val encryptionFactoryClasses = HashMap<UUID, EncryptionServiceFactory?>()
-        val secureRandom = SecureRandom.getInstanceStrong()
+    @Scheduled(fixedDelay = POLL_TIMEOUT)
+    fun sendFileRequests(): Future<Any>?{
+        if (keepRunning){
+            var filesSent = 0L
+            val processUuid = UUID.randomUUID()
+            runningSendProcesses.add(processUuid)
+            logger.debug{"Async process -- sendFileRequests $processUuid: Executing Send File Requests function."  }
+            val centralControllerProtocol = if (centralControllerSettings.useSSL) "https" else "http"
+            //for testing use a hostname verifier that doesn't do any verification
+            if ((centralControllerSettings.useSSL) && (centralControllerSettings.disableCertificateValidation)) {
+                trustSelfSignedSSL()
+                logger.warn { "Central Controller SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
+            }
+            val encryptionFactoryClasses = HashMap<UUID, EncryptionServiceFactory?>()
+            val secureRandom = SecureRandom.getInstanceStrong()
 
-        while (keepRunning){
-            //poll times out every POLL_TIMEOUT milliseconds to check to see if it should keep waiting
-            val fileUuid = filesToUpdate.poll(POLL_TIMEOUT, TimeUnit.MILLISECONDS)
+            logger.trace{"Async process -- sendFileRequests $processUuid: Polling for changes."}
+            val fileUuid = filesToUpdate.poll()
             if (fileUuid != null) {
                 //TODO: compress and encrypt file and add/update database entry
                 //TODO: get version of file back from central controller and store hashes of original and encrypted file
@@ -228,7 +237,7 @@ class FileSystemWatcherService {
                             val centralControllerURL = "$centralControllerProtocol://${centralControllerSettings.host}:${centralControllerSettings.port}/files"
                             val requestHeaders = HttpHeaders()
                             requestHeaders.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                            requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer ${watchedLocation.user?.userToken}")
+                            requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer ${watchedLocation.user.token}")
                             val requestParameters = LinkedMultiValueMap<String, Any>()
                             requestParameters.add("file", ClassPathResource(encryptedFile.absolutePath))
                             requestParameters.add("uuid", fileUuid)
@@ -241,8 +250,9 @@ class FileSystemWatcherService {
                                 logger.debug { "File with local UUID $fileUuid uploaded and assigned remote UUID ${callResponse.body}" }
 
                                 storedFile.lastUpdated = Date(inputFile.lastModified())
-                                storedFile.storedFileVersions.add(StoredFileVersion(storedFile.uuid, callResponse.body, ivParameterSpec?.iv, watchedLocation.encryptionServiceUuid,watchedLocation.encryptionIsSymmetric,watchedLocation.encryptionAlgorithm, watchedLocation.encryptionKeyAlgorithm,watchedLocation.encryptionBlockSize,watchedLocation.secretKey,watchedLocation.publicKey, Date()))
-
+                                val newversion = StoredFileVersion(storedFile.uuid, callResponse.body, ivParameterSpec?.iv, watchedLocation.encryptionServiceUuid,watchedLocation.encryptionIsSymmetric,watchedLocation.encryptionAlgorithm, watchedLocation.encryptionKeyAlgorithm,watchedLocation.encryptionBlockSize,watchedLocation.secretKey,watchedLocation.publicKey, Date())
+                                storedFileVersionRepository.saveAndFlush(newversion)
+                                filesSent++
 
                             } else {
                                 //TODO: if error was for auth failure, skip all other files for this user to reduce bandwidth and log spam
@@ -261,7 +271,11 @@ class FileSystemWatcherService {
 
                     //TODO: handle stored file uuid is not in DB
                 }
+                logger.trace {"Async process -- sendFileRequests $processUuid: Process ending.  Files sent to central controller: $filesSent."}
+            } else {
+                logger.trace {"Async process -- sendFileRequests $processUuid: No changes detected."}
             }
+            runningSendProcesses.remove(processUuid)
         }
         return null
     }
@@ -282,20 +296,14 @@ class FileSystemWatcherService {
             keepRunning = false
             //wait for file transfer process to finish latest item or 59 seconds pass
             var waitLimitTimer = 0
-            while (sendFilesStatus?.isDone == false) {
+            while (runningSendProcesses.isNotEmpty()) {
                 Thread.sleep(1000L)
                 waitLimitTimer++
-                if (waitLimitTimer > 59){
-                    //if 59 seconds pass then reset the keepRunning flag to true to let the processes continue, wait one more second to be sure it actually didn't exit in the moment the keepRunning value was set and then return false
+                if (waitLimitTimer > 60){
+                    //if 60 seconds pass then reset the keepRunning flag to true to let the processes continue
                     keepRunning = true
-                    Thread.sleep(1000L)
-                    if (sendFilesStatus?.isDone == false) {
-                        //current transfer is taking a while so the caller should try again later
-                        return false
-                    } else {
-                        //oops, looks like the function quit before it registered the keep running flag so let's restart as normal
-                        keepRunning = false
-                    }
+                    //current transfer is taking a while so the caller should try again later
+                    return false
                 }
             }
             initializeService()

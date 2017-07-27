@@ -27,5 +27,5 @@ import org.springframework.data.jpa.repository.JpaRepository
  * @author Justin Zak
  */
 interface CentralControllerUserRepository: JpaRepository<CentralControllerUser, Long>{
-    fun findByUserTokenNotNull(): List<CentralControllerUser>?
+    fun findByTokenNotNull(): List<CentralControllerUser>?
 }

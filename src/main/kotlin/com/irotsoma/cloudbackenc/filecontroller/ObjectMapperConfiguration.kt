@@ -13,26 +13,30 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-
 /*
- * Created by irotsoma on 6/7/17.
+ * Created by irotsoma on 10/31/2016.
  */
-package com.irotsoma.cloudbackenc.filecontroller.data
+package com.irotsoma.cloudbackenc.filecontroller
 
-import java.util.*
-import javax.persistence.*
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Primary
 
 /**
- *
+ * A bean to register the Kotlin module for Jackson
  *
  * @author Justin Zak
  */
-@Entity
-@Table(name="stored_file")
-class StoredFile(@Id @Column(name="uuid", unique = true, nullable = false)var uuid: UUID,
-                 @Column(name="watched_location_uuid", nullable = false)var watchedLocationUuid: UUID,
-                 @Column(name="path", nullable=false) var path: String,
-                 @Column(name="last_updated", nullable=false) var lastUpdated: Date){
-    @OneToMany(mappedBy = "storedFileUuid", fetch = FetchType.LAZY)
-    var storedFileVersions: Set<StoredFileVersion>? = hashSetOf()
+@Configuration
+class ObjectMapperConfiguration {
+    /**
+     * Function to generate the necessary Jackson factories for parsing JSON
+     */
+    @Bean
+    @Primary
+    open fun objectMapper() = ObjectMapper().apply {
+        registerModule(KotlinModule())
+    }
 }

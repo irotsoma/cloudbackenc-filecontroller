@@ -17,7 +17,7 @@
 /*
  * Created by irotsoma on 10/20/16.
  */
-package com.irotsoma.cloudbackenc.filecontroller.controllers.exceptions
+package com.irotsoma.cloudbackenc.filecontroller.webui.controllers.exceptions
 
 import com.irotsoma.cloudbackenc.common.RestException
 import com.irotsoma.cloudbackenc.common.RestExceptionExceptions

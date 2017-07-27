@@ -29,7 +29,7 @@ import javax.persistence.*
  */
 @Entity
 @Table(name="stored_file_version")
-class StoredFileVersion(@Column(name="stored_file_uuid", unique = true, nullable = false)var storedFileUuid: UUID,
+class StoredFileVersion(@ManyToOne(targetEntity = StoredFile::class) @JoinColumn(name="stored_file_uuid", unique = true, nullable = false)var storedFileUuid: UUID,
                         @Column(name="remote_file_uuid", nullable=true) var remoteFileUuid: UUID?,
                         @Column(name="initialization_vector", nullable = true) var iv: ByteArray?,
                         @Column(name="encryption_service_uuid", nullable= true)var encryptionServiceUuid: UUID?,

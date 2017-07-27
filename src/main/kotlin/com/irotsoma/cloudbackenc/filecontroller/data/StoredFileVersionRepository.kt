@@ -15,24 +15,15 @@
  */
 
 /*
- * Created by irotsoma on 6/7/17.
+ * Created by irotsoma on 7/21/17.
  */
 package com.irotsoma.cloudbackenc.filecontroller.data
 
-import java.util.*
-import javax.persistence.*
+import org.springframework.data.jpa.repository.JpaRepository
 
 /**
  *
  *
  * @author Justin Zak
  */
-@Entity
-@Table(name="stored_file")
-class StoredFile(@Id @Column(name="uuid", unique = true, nullable = false)var uuid: UUID,
-                 @Column(name="watched_location_uuid", nullable = false)var watchedLocationUuid: UUID,
-                 @Column(name="path", nullable=false) var path: String,
-                 @Column(name="last_updated", nullable=false) var lastUpdated: Date){
-    @OneToMany(mappedBy = "storedFileUuid", fetch = FetchType.LAZY)
-    var storedFileVersions: Set<StoredFileVersion>? = hashSetOf()
-}
+interface StoredFileVersionRepository: JpaRepository<StoredFileVersion, Long>

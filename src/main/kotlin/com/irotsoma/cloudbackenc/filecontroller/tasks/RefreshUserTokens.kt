@@ -29,7 +29,6 @@ import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
-import org.springframework.scheduling.annotation.Async
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
@@ -48,8 +47,7 @@ class RefreshUserTokens {
     @Autowired
     lateinit var centralControllerSettings: CentralControllerSettings
 
-    @Async
-    @Scheduled(fixedDelayString="\$centralcontroller.tokenRefreshInterval")
+    @Scheduled(fixedDelayString="\${centralcontroller.tokenRefreshInterval}")
     fun doRefresh(){
         val centralControllerProtocol = if (centralControllerSettings.useSSL) "https" else "http"
         //for testing use a hostname verifier that doesn't do any verification
@@ -59,11 +57,11 @@ class RefreshUserTokens {
         }
         val centralControllerURL = "$centralControllerProtocol://${centralControllerSettings.host}:${centralControllerSettings.port}/auth/token"
 
-        val currentUsers = centralControllerUserRepository.findByUserTokenNotNull() ?: return
+        val currentUsers = centralControllerUserRepository.findByTokenNotNull() ?: return
         for (user in currentUsers) {
             val requestHeaders = HttpHeaders()
             requestHeaders.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-            requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer ${user.userToken}")
+            requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer ${user.token}")
             val httpEntity = HttpEntity<Any>(requestHeaders)
             val response =
             try {
@@ -73,7 +71,7 @@ class RefreshUserTokens {
             //TODO: Check for other errors and remove the token from the DB if it's no longer valid (i.e. received unauthorized error with current token)
 
             if (response?.body?.token != null){
-                user.userToken = response.body.token
+                user.token = response.body.token
                 centralControllerUserRepository.save(user)
             }
 
