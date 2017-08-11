@@ -32,6 +32,9 @@ import org.springframework.scheduling.config.ScheduledTaskRegistrar
  */
 @Configuration
 class SchedulingConfiguration : SchedulingConfigurer {
+    /**
+     * Setup the task scheduler
+     */
     override fun configureTasks(taskRegistrar: ScheduledTaskRegistrar) {
         val taskScheduler = ThreadPoolTaskScheduler()
         taskScheduler.poolSize = 10

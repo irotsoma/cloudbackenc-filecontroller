@@ -29,13 +29,14 @@ import javax.persistence.*
  * @property id Database-generated ID for the user.
  * @property username Username of the central controller user
  * @property token A token to be used for logging in to the central controller
+ * @property tokenExpiration The expiration date/time for the token
  */
 @Entity
 @Table(name="central_controller_user")
-class CentralControllerUser(@Column(name="username", nullable=false) var username: String,
+data class CentralControllerUser(@Column(name="username", nullable=false, updatable = false) val username: String,
                             @Column(name="token", nullable=true) var token: String?,
                             @Column(name="token_expiration", nullable=true) var tokenExpiration: Date?){
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long = -1
+    private var id: Long = -1
 }

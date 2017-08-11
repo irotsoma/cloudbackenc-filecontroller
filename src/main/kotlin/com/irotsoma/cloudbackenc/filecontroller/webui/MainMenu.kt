@@ -15,40 +15,37 @@
  */
 
 /*
- * Created by irotsoma on 7/21/17.
+ * Created by irotsoma on 8/11/17.
  */
 package com.irotsoma.cloudbackenc.filecontroller.webui
 
-import com.samskivert.mustache.Mustache
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.web.bind.annotation.ControllerAdvice
-import org.springframework.web.bind.annotation.ModelAttribute
+import org.springframework.context.MessageSource
+import org.springframework.context.i18n.LocaleContextHolder
+import org.springframework.stereotype.Component
+import java.util.*
+import javax.annotation.PostConstruct
+
 
 /**
- * Controller advice object to allow for layout abstraction in mustache templates
+ *
  *
  * @author Justin Zak
  */
-@ControllerAdvice
-class LayoutAdvice {
+@Component
+class MainMenu {
 
     @Autowired
-    private lateinit var compiler: Mustache.Compiler
+    private lateinit var messageSource: MessageSource
 
+    val menuItems = ArrayList<Menu>()
 
-    @ModelAttribute("layout")
-    fun layout(model: Map<String, Any>): Mustache.Lambda {
-        return Layout(compiler)
+    @PostConstruct
+    private fun populateValues(){
+        val locale = LocaleContextHolder.getLocale()
+        menuItems.add(Menu(messageSource.getMessage("filecontroller.menuitem.login",null,locale),"/login"))
+        menuItems.add(Menu(messageSource.getMessage("filecontroller.menuitem.users",null,locale),"/users"))
+        menuItems.add(Menu(messageSource.getMessage("filecontroller.menuitem.setup.cloud.services",null,locale),"/cloud-services"))
+
     }
-
-    @ModelAttribute("title")
-    fun defaults(@ModelAttribute layout: Layout): Mustache.Lambda {
-        return Mustache.Lambda { frag, out -> layout.title = frag.execute() }
-    }
-
-    @ModelAttribute("menus")
-    fun menus(): Iterable<Menu> {
-        return MainMenu().menuItems
-    }
-
 }

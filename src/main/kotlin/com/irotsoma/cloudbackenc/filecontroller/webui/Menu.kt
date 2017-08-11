@@ -13,27 +13,15 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-/*
- * Created by irotsoma on 10/28/16.
- */
-package com.irotsoma.cloudbackenc.filecontroller
 
-import org.springframework.boot.SpringApplication
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.scheduling.annotation.EnableScheduling
+/*
+ * Created by irotsoma on 8/11/17.
+ */
+package com.irotsoma.cloudbackenc.filecontroller.webui
 
 /**
- * Primary class
+ *
  *
  * @author Justin Zak
  */
-@SpringBootApplication
-@EnableScheduling
-class FileController
-/**
- * Startup function
- */
-fun main(args: Array<String>) {
-    //val context =
-    SpringApplication.run(FileController::class.java, *args)
-}
+data class Menu (val name: String, val path: String)

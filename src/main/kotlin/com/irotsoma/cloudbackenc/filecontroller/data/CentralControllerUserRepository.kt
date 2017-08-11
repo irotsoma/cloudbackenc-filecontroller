@@ -22,7 +22,7 @@ package com.irotsoma.cloudbackenc.filecontroller.data
 import org.springframework.data.jpa.repository.JpaRepository
 
 /**
- *
+ * Repository interface for CentralControllerUser objects
  *
  * @author Justin Zak
  */

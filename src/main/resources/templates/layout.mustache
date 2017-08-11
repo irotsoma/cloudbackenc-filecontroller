@@ -17,9 +17,25 @@
 
 <html>
 <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>{{{layout.title}}}</title>
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width" />
+    <base href="/" />
+    <link rel="stylesheet" type="text/css"
+          href="/webjars/bootstrap/4.0.0-alpha.6-1/css/bootstrap.min.css" />
+    <script type="text/javascript"
+            src="/webjars/jquery/3.2.1/jquery.min.js"></script>
+    <script type="text/javascript"
+            src="webjars/bootstrap/4.0.0-alpha.6-1/js/bootstrap.min.js"></script>
 </head>
 <body>
-{{{layout.body}}}
+    <div class="container">
+        <ul class="nav nav-pills" role="tablist">
+            {{#menus}}<li><a href="{{path}}">{{name}}</a></li>{{/menus}}
+        </ul>
+    </div>
+    {{{layout.body}}}
 </body>
 </html>

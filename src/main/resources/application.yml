@@ -1,0 +1,7 @@
+app:
+  menus:
+    - name: Login
+      path: /
+spring:
+  mustache:
+    expose-request-attributes: true

@@ -23,14 +23,14 @@ import java.util.*
 import javax.persistence.*
 
 /**
- *
+ * Represents a version of a file that is stored on a cloud service
  *
  * @author Justin Zak
  */
 @Entity
 @Table(name="stored_file_version")
-class StoredFileVersion(@ManyToOne(targetEntity = StoredFile::class) @JoinColumn(name="stored_file_uuid", unique = true, nullable = false)var storedFileUuid: UUID,
-                        @Column(name="remote_file_uuid", nullable=true) var remoteFileUuid: UUID?,
+class StoredFileVersion(@ManyToOne(targetEntity = StoredFile::class) @JoinColumn(name="stored_file_uuid", unique = true, nullable = false, updatable = false)val storedFileUuid: UUID,
+                        @Column(name="remote_file_uuid", nullable=true, updatable = false) val remoteFileUuid: UUID?,
                         @Column(name="initialization_vector", nullable = true) var iv: ByteArray?,
                         @Column(name="encryption_service_uuid", nullable= true)var encryptionServiceUuid: UUID?,
                         @Column(name="encryption_is_symmetric", nullable = false ) var encryptionIsSymmetric: Boolean,
@@ -42,5 +42,5 @@ class StoredFileVersion(@ManyToOne(targetEntity = StoredFile::class) @JoinColumn
                         @Column(name="timestamp", nullable = false) var timestamp:Date) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long = -1
+    private var id: Long = -1
 }
