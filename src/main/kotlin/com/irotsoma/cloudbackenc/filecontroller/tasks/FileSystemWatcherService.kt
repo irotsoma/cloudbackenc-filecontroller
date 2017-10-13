@@ -222,8 +222,8 @@ class FileSystemWatcherService {
                         } else {
                             encryptionAlgorithm = EncryptionServiceAsymmetricEncryptionAlgorithms.valueOf(watchedLocation.encryptionAlgorithm)
                             val decodedKey = Base64.getDecoder().decode(watchedLocation.publicKey)
-                            val X509publicKey = X509EncodedKeySpec(decodedKey)
-                            encryptionKey = KeyFactory.getInstance(watchedLocation.encryptionKeyAlgorithm).generatePublic(X509publicKey)
+                            val x509publicKey = X509EncodedKeySpec(decodedKey)
+                            encryptionKey = KeyFactory.getInstance(watchedLocation.encryptionKeyAlgorithm).generatePublic(x509publicKey)
                         }
                         if (encryptionFactoryClasses[encryptionServiceUuid] != null) {
                             val encryptedFile = File.createTempFile(FilenameUtils.getName(storedFile.path), ".enc.tmp")
