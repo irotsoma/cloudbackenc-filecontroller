@@ -23,7 +23,9 @@ import java.util.*
 import javax.persistence.*
 
 /**
+ * Represents a location on a drive that is being watched for changes.
  *
+ * Contains the encryption information to be used for new versions of the file.
  *
  * @author Justin Zak
  */

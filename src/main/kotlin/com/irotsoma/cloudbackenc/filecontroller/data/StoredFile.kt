@@ -29,9 +29,9 @@ import javax.persistence.*
  */
 @Entity
 @Table(name="stored_file")
-class StoredFile(@Id @Column(name="uuid", unique = true, nullable = false)var uuid: UUID,
-                 @Column(name="watched_location_uuid", nullable = false)var watchedLocationUuid: UUID,
-                 @Column(name="path", nullable=false) var path: String,
+class StoredFile(@Id @Column(name="uuid", unique = true, nullable = false, updatable = false)val uuid: UUID,
+                 @Column(name="watched_location_uuid", nullable = false, updatable = false)val watchedLocationUuid: UUID,
+                 @Column(name="path", nullable=false, updatable = false) val path: String,
                  @Column(name="last_updated", nullable=false) var lastUpdated: Date){
     @OneToMany(mappedBy = "storedFileUuid", fetch = FetchType.LAZY)
     var storedFileVersions: Set<StoredFileVersion>? = hashSetOf()

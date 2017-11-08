@@ -23,7 +23,9 @@ import java.util.*
 import javax.persistence.*
 
 /**
- * Represents a version of a file that is stored on a cloud service
+ * Represents a version of a file that is stored on a cloud service.
+ *
+ * Contains the encryption information used for the individual version of the file.
  *
  * @author Justin Zak
  */
@@ -31,15 +33,18 @@ import javax.persistence.*
 @Table(name="stored_file_version")
 class StoredFileVersion(@ManyToOne(targetEntity = StoredFile::class) @JoinColumn(name="stored_file_uuid", unique = true, nullable = false, updatable = false)val storedFileUuid: UUID,
                         @Column(name="remote_file_uuid", nullable=true, updatable = false) val remoteFileUuid: UUID?,
-                        @Column(name="initialization_vector", nullable = true) var iv: ByteArray?,
-                        @Column(name="encryption_service_uuid", nullable= true)var encryptionServiceUuid: UUID?,
-                        @Column(name="encryption_is_symmetric", nullable = false ) var encryptionIsSymmetric: Boolean,
-                        @Column(name="encryption_algorithm", nullable=false) var encryptionAlgorithm: String,
-                        @Column(name="encryption_key_algorithm", nullable=false) var encryptionKeyAlgorithm: String,
-                        @Column(name="encryption_block_size",nullable=false)var encryptionBlockSize: Int,
-                        @Column(name="secret_key", nullable = false) var secretKey:String,
-                        @Column(name="public_key", nullable = true) var publicKey: String?,
-                        @Column(name="timestamp", nullable = false) var timestamp:Date) {
+                        @Column(name="remote_file_version", nullable=false, updatable = false) val remoteFileVersion: Long?,
+                        @Column(name="initialization_vector", nullable = true, updatable = false) val iv: ByteArray?,
+                        @Column(name="encryption_service_uuid", nullable= true, updatable = false)val encryptionServiceUuid: UUID?,
+                        @Column(name="encryption_is_symmetric", nullable = false, updatable = false ) val encryptionIsSymmetric: Boolean,
+                        @Column(name="encryption_algorithm", nullable=false, updatable = false) val encryptionAlgorithm: String,
+                        @Column(name="encryption_key_algorithm", nullable=false, updatable = false) val encryptionKeyAlgorithm: String,
+                        @Column(name="encryption_block_size",nullable=false, updatable = false)val encryptionBlockSize: Int,
+                        @Column(name="secret_key", nullable = false, updatable = false) val secretKey:String,
+                        @Column(name="public_key", nullable = true, updatable = false) val publicKey: String?,
+                        @Column(name="timestamp", nullable = false, updatable = false) val timestamp:Date,
+                        @Column(name="original_hash", nullable=false, updatable = false)val originalHash: String?,
+                        @Column(name="encrypted_hash", nullable=false, updatable = false)val encryptedHash: String?) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private var id: Long = -1

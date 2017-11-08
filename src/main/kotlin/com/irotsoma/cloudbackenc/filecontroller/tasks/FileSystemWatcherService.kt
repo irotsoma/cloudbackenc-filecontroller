@@ -51,6 +51,7 @@ import java.nio.file.StandardWatchEventKinds
 import java.nio.file.WatchService
 import java.security.Key
 import java.security.KeyFactory
+import java.security.MessageDigest
 import java.security.SecureRandom
 import java.security.spec.X509EncodedKeySpec
 import java.util.*
@@ -60,6 +61,7 @@ import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import javax.xml.bind.DatatypeConverter
 import kotlin.collections.HashMap
 
 
@@ -106,7 +108,7 @@ class FileSystemWatcherService {
                 val watchedLocationFile = File(watchedLocation.path)
                 if (watchedLocationFile.isDirectory) {
                     val files =
-                            if (watchedLocation.recursive ?: false) {
+                            if (watchedLocation.recursive == true) {
                                 FileUtils.listFiles(File(watchedLocation.path), filter, TrueFileFilter.INSTANCE)
                             } else {
                                 FileUtils.listFiles(File(watchedLocation.path), filter, null)
@@ -121,7 +123,7 @@ class FileSystemWatcherService {
                     }
                 }
                 fileList.forEach { watchedFile ->
-                    if ((watchedFile is File) && (!watchedFile.isDirectory)) {
+                    if (!watchedFile.isDirectory) {
                         if (watchedFile.canRead()){
                             //register the path with the watch service
                             watchedFile.toPath().register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY)
@@ -195,8 +197,6 @@ class FileSystemWatcherService {
             logger.trace{"Async process -- sendFileRequests $processUuid: Polling for changes."}
             val fileUuid = filesToUpdate.poll()
             if (fileUuid != null) {
-                //TODO: compress and encrypt file and add/update database entry
-                //TODO: get version of file back from central controller and store hashes of original and encrypted file
                 val storedFile = storedFileRepository.findByUuid(fileUuid)
                 if (storedFile != null) {
 
@@ -233,7 +233,12 @@ class FileSystemWatcherService {
                                 secureRandom.nextBytes(byteArray)
                                 ivParameterSpec =  IvParameterSpec(byteArray)
                             }
+                            val originalHash = hashFile(File(storedFile.path))
+
                             encryptionFactoryClasses[encryptionServiceUuid]!!.encryptionServiceFileService.encrypt(compressedFile.inputStream(), encryptedFile.outputStream(), encryptionKey, encryptionAlgorithm, ivParameterSpec, secureRandom)
+
+                            val encryptedHash = hashFile(encryptedFile)
+
                             val centralControllerURL = "$centralControllerProtocol://${centralControllerSettings.host}:${centralControllerSettings.port}/files"
                             val requestHeaders = HttpHeaders()
                             requestHeaders.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
@@ -241,18 +246,23 @@ class FileSystemWatcherService {
                             val requestParameters = LinkedMultiValueMap<String, Any>()
                             requestParameters.add("file", ClassPathResource(encryptedFile.absolutePath))
                             requestParameters.add("uuid", fileUuid)
-                            val httpEntity = HttpEntity<LinkedMultiValueMap<String, Any>>(requestParameters, requestHeaders)
-                            val callResponse = RestTemplate().postForEntity(centralControllerURL, httpEntity, UUID::class.java)
+                            val httpEntity = HttpEntity(requestParameters, requestHeaders)
+                            val callResponse = RestTemplate().postForEntity(centralControllerURL, httpEntity, Pair::class.java)
 
                             //TODO: better user token system
                             if (callResponse.statusCode == HttpStatus.OK) {
+                                val fileVersion = try {callResponse.body?.second as Long } catch (ignore:Exception) {null}
+                                val fileRemoteUUID = try {callResponse.body?.first as UUID} catch (ignore:Exception){null}
+                                if (fileVersion == null || fileRemoteUUID == null){
+                                    logger.error{"Invalid Remote UUID or version number returned from central controller. Values: ${callResponse.body?.first}, ${callResponse.body?.second}"}
+                                } else {
+                                    logger.debug { "File with local UUID $fileUuid uploaded and assigned remote UUID ${callResponse.body?.first}" }
 
-                                logger.debug { "File with local UUID $fileUuid uploaded and assigned remote UUID ${callResponse.body}" }
-
-                                storedFile.lastUpdated = Date(inputFile.lastModified())
-                                val newversion = StoredFileVersion(storedFile.uuid, callResponse.body, ivParameterSpec?.iv, watchedLocation.encryptionServiceUuid,watchedLocation.encryptionIsSymmetric,watchedLocation.encryptionAlgorithm, watchedLocation.encryptionKeyAlgorithm,watchedLocation.encryptionBlockSize,watchedLocation.secretKey,watchedLocation.publicKey, Date())
-                                storedFileVersionRepository.saveAndFlush(newversion)
-                                filesSent++
+                                    storedFile.lastUpdated = Date(inputFile.lastModified())
+                                    val newVersion = StoredFileVersion(storedFile.uuid, fileRemoteUUID, fileVersion, ivParameterSpec?.iv, watchedLocation.encryptionServiceUuid, watchedLocation.encryptionIsSymmetric, watchedLocation.encryptionAlgorithm, watchedLocation.encryptionKeyAlgorithm, watchedLocation.encryptionBlockSize, watchedLocation.secretKey, watchedLocation.publicKey, Date(), originalHash, encryptedHash)
+                                    storedFileVersionRepository.saveAndFlush(newVersion)
+                                    filesSent++
+                                }
 
                             } else {
                                 //TODO: if error was for auth failure, skip all other files for this user to reduce bandwidth and log spam
@@ -312,5 +322,18 @@ class FileSystemWatcherService {
             //service is already in the process of being shut down and can't be restarted
             return false
         }
+    }
+
+    fun hashFile(file: File): String{
+        val messageDigest = MessageDigest.getInstance("SHA1")
+        val fileInputStream = file.inputStream()
+        val dataBytes = ByteArray(1024)
+        var readBytes = fileInputStream.read(dataBytes)
+        while (readBytes > -1){
+            messageDigest.update(dataBytes,0,readBytes)
+            readBytes = fileInputStream.read(dataBytes)
+        }
+        val outputBytes: ByteArray = messageDigest.digest()
+        return DatatypeConverter.printHexBinary(outputBytes)
     }
 }

@@ -1,7 +1,8 @@
-app:
-  menus:
-    - name: Login
-      path: /
+app.menus:
+  - name: Home
+    path: /
+  - name: Login
+    path: /login
 spring:
   mustache:
     expose-request-attributes: true

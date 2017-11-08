@@ -24,20 +24,20 @@ databaseChangeLog:
             columns:
               - column:
                   name: id
-                  type: int
+                  type: long
                   autoIncrement: true
                   constraints:
                     primaryKey: true
                     nullable: false
               - column:
                   name: username
-                  type: nvarchar(max)
+                  type: nvarchar(1023)
                   constraints:
                     unique: true
                     nullable: false
               - column:
                   name: token
-                  type: nvarchar(max)
+                  type: nvarchar(5000)
                   constraints:
                     nullable: true
               - column:
@@ -45,10 +45,6 @@ databaseChangeLog:
                   type: datetime
                   constraints:
                     nullable: true
-  - changeSet:
-      id: 2
-      author: irotsoma
-      changes:
         - createTable:
             tableName: watched_location
             columns:
@@ -65,7 +61,7 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: path
-                  type: nvarchar(max)
+                  type: nvarchar(5000)
                   constraints:
                     nullable: false
               - column:
@@ -76,7 +72,7 @@ databaseChangeLog:
                     nullable: true
               - column:
                   name: filter
-                  type: nvarchar(max)
+                  type: nvarchar(1023)
                   constraints:
                     nullable: true
               - column:
@@ -91,32 +87,32 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: encryption_algorithm
-                  type: nvarchar(max)
+                  type: nvarchar(1023)
                   constraints:
                     nullable: false
               - column:
                   name: encryption_key_algorithm
-                  type: nvarchar(max)
+                  type: nvarchar(1023)
                   constraints:
                     nullable: false
               - column:
                   name: encryption_block_size
-                  type: nvarchar(max)
+                  type: nvarchar(1023)
                   constraints:
                     nullable: false
               - column:
                   name: secret_key
-                  type: nvarchar(max)
+                  type: nvarchar(1023)
                   constraints:
                     nullable: false
               - column:
                   name: public_key
-                  type: nvarchar(max)
+                  type: nvarchar(1023)
                   constraints:
                     nullable: true
               - column:
                   name: initialization_vector_parameter_spec
-                  type: varbinary(max)
+                  type: varbinary(5000)
                   constraints:
                     nullable: true
         - createTable:
@@ -135,7 +131,7 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: path
-                  type: nvarchar(max)
+                  type: nvarchar(5000)
                   constraints:
                     nullable: false
               - column:
@@ -148,7 +144,7 @@ databaseChangeLog:
             columns:
               - column:
                   name: id
-                  type: int
+                  type: long
                   constraints:
                     primaryKey: true
                     nullable: false
@@ -163,6 +159,11 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: remote_file_version
+                  type: long
+                  constraints:
+                    nullable: false
+              - column:
                   name: encryption_service_uuid
                   type: uuid
                   constraints:
@@ -174,34 +175,44 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: encryption_algorithm
-                  type: nvarchar(max)
+                  type: nvarchar(1023)
                   constraints:
                     nullable: false
               - column:
                   name: encryption_key_algorithm
-                  type: nvarchar(max)
+                  type: nvarchar(1023)
                   constraints:
                     nullable: false
               - column:
                   name: encryption_block_size
-                  type: nvarchar(max)
+                  type: nvarchar(1023)
                   constraints:
                     nullable: false
               - column:
                   name: secret_key
-                  type: nvarchar(max)
+                  type: nvarchar(1023)
                   constraints:
                     nullable: false
               - column:
                   name: public_key
-                  type: nvarchar(max)
+                  type: nvarchar(1023)
                   constraints:
                     nullable: true
               - column:
                   name: initialization_vector
-                  type: varbinary(max)
+                  type: varbinary(5000)
                   constraints:
                     nullable: true
+              - column:
+                  name: original_hash
+                  type: varchar(1023)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: encrypted_hash
+                  type: nvarchar(1023)
+                  constraints:
+                    nullable: false
               - column:
                   name: timestamp
                   type: datetime
