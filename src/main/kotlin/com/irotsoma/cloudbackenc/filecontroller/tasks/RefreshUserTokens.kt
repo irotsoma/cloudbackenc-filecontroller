@@ -25,10 +25,7 @@ import com.irotsoma.cloudbackenc.filecontroller.data.CentralControllerUserReposi
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpMethod
-import org.springframework.http.MediaType
+import org.springframework.http.*
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
@@ -63,15 +60,15 @@ class RefreshUserTokens {
             requestHeaders.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer ${user.token}")
             val httpEntity = HttpEntity<Any>(requestHeaders)
-            val response =
+            val response : ResponseEntity<AuthenticationToken>? =
             try {
                 RestTemplate().exchange(centralControllerURL, HttpMethod.GET, httpEntity, AuthenticationToken::class.java)
-            } catch (ignore: Exception){null}
+            } catch (ignore: Exception) { null }
 
             //TODO: Check for other errors and remove the token from the DB if it's no longer valid (i.e. received unauthorized error with current token)
 
             if (response?.body?.token != null){
-                user.token = response.body.token
+                user.token = response.body?.token
                 centralControllerUserRepository.save(user)
             }
 

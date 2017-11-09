@@ -19,7 +19,7 @@
  */
 package com.irotsoma.cloudbackenc.filecontroller.tasks
 
-//import com.irotsoma.cloudbackenc.filecontroller.encryption.BzipFile
+import com.irotsoma.cloudbackenc.common.Utilities.hashFile
 import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionServiceAsymmetricEncryptionAlgorithms
 import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionServiceEncryptionAlgorithms
 import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionServiceFactory
@@ -51,7 +51,6 @@ import java.nio.file.StandardWatchEventKinds
 import java.nio.file.WatchService
 import java.security.Key
 import java.security.KeyFactory
-import java.security.MessageDigest
 import java.security.SecureRandom
 import java.security.spec.X509EncodedKeySpec
 import java.util.*
@@ -61,7 +60,6 @@ import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
-import javax.xml.bind.DatatypeConverter
 import kotlin.collections.HashMap
 
 
@@ -91,12 +89,12 @@ class FileSystemWatcherService {
     @Autowired
     lateinit var encryptionServiceRepository: EncryptionServiceRepository
 
-    var watchService: WatchService? = null
+    @Volatile private var watchService: WatchService? = null
 
-    private val filesToUpdate = LinkedBlockingQueue<UUID>()
+    @Volatile private var filesToUpdate = LinkedBlockingQueue<UUID>()
 
     @Volatile private var keepRunning = false
-    private val runningSendProcesses = mutableListOf<UUID>()
+    @Volatile private var runningSendProcesses = mutableListOf<UUID>()
 
     @PostConstruct
     fun initializeService(){
@@ -322,18 +320,5 @@ class FileSystemWatcherService {
             //service is already in the process of being shut down and can't be restarted
             return false
         }
-    }
-
-    fun hashFile(file: File): String{
-        val messageDigest = MessageDigest.getInstance("SHA1")
-        val fileInputStream = file.inputStream()
-        val dataBytes = ByteArray(1024)
-        var readBytes = fileInputStream.read(dataBytes)
-        while (readBytes > -1){
-            messageDigest.update(dataBytes,0,readBytes)
-            readBytes = fileInputStream.read(dataBytes)
-        }
-        val outputBytes: ByteArray = messageDigest.digest()
-        return DatatypeConverter.printHexBinary(outputBytes)
     }
 }
