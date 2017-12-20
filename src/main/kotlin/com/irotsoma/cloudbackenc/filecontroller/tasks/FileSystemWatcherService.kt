@@ -27,7 +27,7 @@ import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionSer
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
 import com.irotsoma.cloudbackenc.filecontroller.data.*
 import com.irotsoma.cloudbackenc.filecontroller.encryption.BzipFile
-import com.irotsoma.cloudbackenc.filecontroller.encryption.EncryptionServiceRepository
+import com.irotsoma.cloudbackenc.filecontroller.encryption.EncryptionServiceRepositoryImplementation
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
 import mu.KLogging
 import org.apache.commons.io.FileUtils
@@ -87,7 +87,7 @@ class FileSystemWatcherService {
     @Autowired
     lateinit var storedFileVersionRepository: StoredFileVersionRepository
     @Autowired
-    lateinit var encryptionServiceRepository: EncryptionServiceRepository
+    lateinit var encryptionServiceRepository: EncryptionServiceRepositoryImplementation
 
     @Volatile private var watchService: WatchService? = null
 
@@ -145,7 +145,9 @@ class FileSystemWatcherService {
         keepRunning = true
     }
 
-
+    /**
+     * Periodically polls the file system watchers and adds any changed files to a queue to be sent to the central controller
+     */
     @Scheduled(initialDelay = 1000, fixedDelayString="\${filecontroller.poll.frequency}")
     fun pollWatchers(): Future<Any>? {
         var filesChanged = 0L
@@ -204,7 +206,7 @@ class FileSystemWatcherService {
                     val watchedLocation = watchedLocationRepository.findByUuid(storedFile.watchedLocationUuid)
                     if (watchedLocation != null) {
                         //load factory if it hasn't already been loaded
-                        val encryptionServiceUuid = watchedLocation.encryptionServiceUuid ?: UUID.fromString(encryptionServiceRepository.encryptionServicesSettings.defaultServiceUuid)
+                        val encryptionServiceUuid = watchedLocation.encryptionServiceUuid ?: UUID.fromString(encryptionServiceRepository.encryptionServicesSettingsImplementation.defaultServiceUuid)
                         if (!encryptionFactoryClasses.containsKey(encryptionServiceUuid)) {
                             encryptionFactoryClasses.put(encryptionServiceUuid, encryptionServiceRepository.encryptionServiceExtensions[encryptionServiceUuid]?.newInstance())
                             if (encryptionFactoryClasses[encryptionServiceUuid] == null) {

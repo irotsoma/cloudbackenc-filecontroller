@@ -19,7 +19,7 @@ package com.irotsoma.cloudbackenc.filecontroller.encryption
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration
-
+import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionServicesSettings
 
 /**
  * Created by irotsoma on 8/18/2016.
@@ -30,8 +30,4 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 @EnableConfigurationProperties
 @ConfigurationProperties("encryptionservices")
-class EncryptionServicesSettings {
-    lateinit var directory: String
-    lateinit var configFileName: String
-    lateinit var defaultServiceUuid: String
-}
+class EncryptionServicesSettingsImplementation: EncryptionServicesSettings()
