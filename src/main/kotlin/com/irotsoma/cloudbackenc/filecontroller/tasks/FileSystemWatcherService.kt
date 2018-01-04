@@ -208,7 +208,7 @@ class FileSystemWatcherService {
                         //load factory if it hasn't already been loaded
                         val encryptionServiceUuid = watchedLocation.encryptionServiceUuid ?: UUID.fromString(encryptionServiceRepository.encryptionServicesSettings.defaultServiceUuid)
                         if (!encryptionFactoryClasses.containsKey(encryptionServiceUuid)) {
-                            encryptionFactoryClasses.put(encryptionServiceUuid, encryptionServiceRepository.extensions[encryptionServiceUuid]?.factoryClass?.java?.newInstance() as EncryptionServiceFactory?)
+                            encryptionFactoryClasses.put(encryptionServiceUuid, encryptionServiceRepository.extensions[encryptionServiceUuid]?.newInstance() as EncryptionServiceFactory?)
                             if (encryptionFactoryClasses[encryptionServiceUuid] == null) {
                                 logger.warn { "Unable to load encryption service factory with UUID: $encryptionServiceUuid.  Files using this service will not be processed." }
                             }
