@@ -27,7 +27,7 @@ import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionSer
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
 import com.irotsoma.cloudbackenc.filecontroller.data.*
 import com.irotsoma.cloudbackenc.filecontroller.encryption.BzipFile
-import com.irotsoma.cloudbackenc.filecontroller.encryption.EncryptionServiceRepositoryImplementation
+import com.irotsoma.cloudbackenc.filecontroller.encryption.EncryptionServiceRepository
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
 import mu.KLogging
 import org.apache.commons.io.FileUtils
@@ -87,7 +87,7 @@ class FileSystemWatcherService {
     @Autowired
     lateinit var storedFileVersionRepository: StoredFileVersionRepository
     @Autowired
-    lateinit var encryptionServiceRepository: EncryptionServiceRepositoryImplementation
+    lateinit var encryptionServiceRepository: EncryptionServiceRepository
 
     @Volatile private var watchService: WatchService? = null
 
@@ -206,9 +206,9 @@ class FileSystemWatcherService {
                     val watchedLocation = watchedLocationRepository.findByUuid(storedFile.watchedLocationUuid)
                     if (watchedLocation != null) {
                         //load factory if it hasn't already been loaded
-                        val encryptionServiceUuid = watchedLocation.encryptionServiceUuid ?: UUID.fromString(encryptionServiceRepository.encryptionServicesSettingsImplementation.defaultServiceUuid)
+                        val encryptionServiceUuid = watchedLocation.encryptionServiceUuid ?: UUID.fromString(encryptionServiceRepository.encryptionServicesSettings.defaultServiceUuid)
                         if (!encryptionFactoryClasses.containsKey(encryptionServiceUuid)) {
-                            encryptionFactoryClasses.put(encryptionServiceUuid, encryptionServiceRepository.encryptionServiceExtensions[encryptionServiceUuid]?.newInstance())
+                            encryptionFactoryClasses.put(encryptionServiceUuid, encryptionServiceRepository.extensions[encryptionServiceUuid]?.factoryClass?.java?.newInstance() as EncryptionServiceFactory?)
                             if (encryptionFactoryClasses[encryptionServiceUuid] == null) {
                                 logger.warn { "Unable to load encryption service factory with UUID: $encryptionServiceUuid.  Files using this service will not be processed." }
                             }
