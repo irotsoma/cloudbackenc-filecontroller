@@ -20,14 +20,14 @@
 package com.irotsoma.cloudbackenc.filecontroller.tasks
 
 import com.irotsoma.cloudbackenc.common.Utilities.hashFile
-import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionServiceAsymmetricEncryptionAlgorithms
-import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionServiceEncryptionAlgorithms
-import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionServiceFactory
-import com.irotsoma.cloudbackenc.common.encryptionserviceinterface.EncryptionServiceSymmetricEncryptionAlgorithms
+import com.irotsoma.cloudbackenc.common.encryption.EncryptionAlgorithms
+import com.irotsoma.cloudbackenc.common.encryption.EncryptionAsymmetricEncryptionAlgorithms
+import com.irotsoma.cloudbackenc.common.encryption.EncryptionFactory
+import com.irotsoma.cloudbackenc.common.encryption.EncryptionSymmetricEncryptionAlgorithms
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
 import com.irotsoma.cloudbackenc.filecontroller.data.*
 import com.irotsoma.cloudbackenc.filecontroller.encryption.BzipFile
-import com.irotsoma.cloudbackenc.filecontroller.encryption.EncryptionServiceRepository
+import com.irotsoma.cloudbackenc.filecontroller.encryption.EncryptionExtensionRepository
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
 import mu.KLogging
 import org.apache.commons.io.FileUtils
@@ -87,7 +87,7 @@ class FileSystemWatcherService {
     @Autowired
     lateinit var storedFileVersionRepository: StoredFileVersionRepository
     @Autowired
-    lateinit var encryptionServiceRepository: EncryptionServiceRepository
+    lateinit var encryptionExtensionRepository: EncryptionExtensionRepository
 
     @Volatile private var watchService: WatchService? = null
 
@@ -191,7 +191,7 @@ class FileSystemWatcherService {
                 trustSelfSignedSSL()
                 logger.warn { "Central Controller SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
             }
-            val encryptionFactoryClasses = HashMap<UUID, EncryptionServiceFactory?>()
+            val encryptionFactoryClasses = HashMap<UUID, EncryptionFactory?>()
             val secureRandom = SecureRandom.getInstanceStrong()
 
             logger.trace{"Async process -- sendFileRequests $processUuid: Polling for changes."}
@@ -206,26 +206,26 @@ class FileSystemWatcherService {
                     val watchedLocation = watchedLocationRepository.findByUuid(storedFile.watchedLocationUuid)
                     if (watchedLocation != null) {
                         //load factory if it hasn't already been loaded
-                        val encryptionServiceUuid = watchedLocation.encryptionServiceUuid ?: UUID.fromString(encryptionServiceRepository.encryptionServicesSettings.defaultServiceUuid)
-                        if (!encryptionFactoryClasses.containsKey(encryptionServiceUuid)) {
-                            encryptionFactoryClasses.put(encryptionServiceUuid, encryptionServiceRepository.extensions[encryptionServiceUuid]?.newInstance() as EncryptionServiceFactory?)
-                            if (encryptionFactoryClasses[encryptionServiceUuid] == null) {
-                                logger.warn { "Unable to load encryption service factory with UUID: $encryptionServiceUuid.  Files using this service will not be processed." }
+                        val encryptionUuid = watchedLocation.encryptionUuid ?: UUID.fromString(encryptionExtensionRepository.encryptionExtensionSettings.defaultServiceUuid)
+                        if (!encryptionFactoryClasses.containsKey(encryptionUuid)) {
+                            encryptionFactoryClasses.put(encryptionUuid, encryptionExtensionRepository.extensions[encryptionUuid]?.newInstance() as EncryptionFactory?)
+                            if (encryptionFactoryClasses[encryptionUuid] == null) {
+                                logger.warn { "Unable to load encryption service factory with UUID: $encryptionUuid.  Files using this service will not be processed." }
                             }
                         }
                         val encryptionKey: Key
-                        val encryptionAlgorithm: EncryptionServiceEncryptionAlgorithms
+                        val encryptionAlgorithm: EncryptionAlgorithms
                         if (watchedLocation.encryptionIsSymmetric) {
-                            encryptionAlgorithm = EncryptionServiceSymmetricEncryptionAlgorithms.valueOf(watchedLocation.encryptionAlgorithm)
+                            encryptionAlgorithm = EncryptionSymmetricEncryptionAlgorithms.valueOf(watchedLocation.encryptionAlgorithm)
                             val decodedKey = Base64.getDecoder().decode(watchedLocation.secretKey)
                             encryptionKey = SecretKeySpec(decodedKey, watchedLocation.encryptionKeyAlgorithm)
                         } else {
-                            encryptionAlgorithm = EncryptionServiceAsymmetricEncryptionAlgorithms.valueOf(watchedLocation.encryptionAlgorithm)
+                            encryptionAlgorithm = EncryptionAsymmetricEncryptionAlgorithms.valueOf(watchedLocation.encryptionAlgorithm)
                             val decodedKey = Base64.getDecoder().decode(watchedLocation.publicKey)
                             val x509publicKey = X509EncodedKeySpec(decodedKey)
                             encryptionKey = KeyFactory.getInstance(watchedLocation.encryptionKeyAlgorithm).generatePublic(x509publicKey)
                         }
-                        if (encryptionFactoryClasses[encryptionServiceUuid] != null) {
+                        if (encryptionFactoryClasses[encryptionUuid] != null) {
                             val encryptedFile = File.createTempFile(FilenameUtils.getName(storedFile.path), ".enc.tmp")
                             var ivParameterSpec: IvParameterSpec? = null
                             if (watchedLocation.encryptionBlockSize != -1){
@@ -235,7 +235,7 @@ class FileSystemWatcherService {
                             }
                             val originalHash = hashFile(File(storedFile.path))
 
-                            encryptionFactoryClasses[encryptionServiceUuid]!!.encryptionServiceFileService.encrypt(compressedFile.inputStream(), encryptedFile.outputStream(), encryptionKey, encryptionAlgorithm, ivParameterSpec, secureRandom)
+                            encryptionFactoryClasses[encryptionUuid]!!.encryptionFileService.encrypt(compressedFile.inputStream(), encryptedFile.outputStream(), encryptionKey, encryptionAlgorithm, ivParameterSpec, secureRandom)
 
                             val encryptedHash = hashFile(encryptedFile)
 
@@ -259,7 +259,7 @@ class FileSystemWatcherService {
                                     logger.debug { "File with local UUID $fileUuid uploaded and assigned remote UUID ${callResponse.body?.first}" }
 
                                     storedFile.lastUpdated = Date(inputFile.lastModified())
-                                    val newVersion = StoredFileVersion(storedFile.uuid, fileRemoteUUID, fileVersion, ivParameterSpec?.iv, watchedLocation.encryptionServiceUuid, watchedLocation.encryptionIsSymmetric, watchedLocation.encryptionAlgorithm, watchedLocation.encryptionKeyAlgorithm, watchedLocation.encryptionBlockSize, watchedLocation.secretKey, watchedLocation.publicKey, Date(), originalHash, encryptedHash)
+                                    val newVersion = StoredFileVersion(storedFile.uuid, fileRemoteUUID, fileVersion, ivParameterSpec?.iv, watchedLocation.encryptionUuid, watchedLocation.encryptionIsSymmetric, watchedLocation.encryptionAlgorithm, watchedLocation.encryptionKeyAlgorithm, watchedLocation.encryptionBlockSize, watchedLocation.secretKey, watchedLocation.publicKey, Date(), originalHash, encryptedHash)
                                     storedFileVersionRepository.saveAndFlush(newVersion)
                                     filesSent++
                                 }
@@ -271,7 +271,7 @@ class FileSystemWatcherService {
                                 logger.warn { "Server returned ${callResponse.statusCode.name}" }
                             }
                         } else {
-                            logger.warn { "Skipping file with UUID $fileUuid because the encryption service with UUID $encryptionServiceUuid failed to load." }
+                            logger.warn { "Skipping file with UUID $fileUuid because the encryption service with UUID $encryptionUuid failed to load." }
                             logger.warn { "Fix the encryption service plugin and restart the service to process these files." }
                         }
                     } else {

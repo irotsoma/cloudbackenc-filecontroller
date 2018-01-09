@@ -36,7 +36,7 @@ class WatchedLocation(@Id @Column(name="uuid", unique = true, nullable = false)v
                       @Column(name="path",nullable=false) var path: String,
                       @Column(name="recursive",nullable=true)var recursive: Boolean?,
                       @Column(name="filter", nullable = true) var filter: String?,
-                      @Column(name="encryption_service_uuid", nullable= true)var encryptionServiceUuid: UUID?,
+                      @Column(name="encryption_service_uuid", nullable= true)var encryptionUuid: UUID?,
                       @Column(name="encryption_algorithm", nullable=false) var encryptionAlgorithm: String,
                       @Column(name="encryption_block_size",nullable=false)var encryptionBlockSize: Int,
                       @Column(name="encryption_key_algorithm", nullable=false) var encryptionKeyAlgorithm: String,

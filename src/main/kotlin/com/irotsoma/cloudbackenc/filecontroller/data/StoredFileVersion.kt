@@ -35,7 +35,7 @@ class StoredFileVersion(@ManyToOne(targetEntity = StoredFile::class) @JoinColumn
                         @Column(name="remote_file_uuid", nullable=true, updatable = false) val remoteFileUuid: UUID?,
                         @Column(name="remote_file_version", nullable=false, updatable = false) val remoteFileVersion: Long?,
                         @Column(name="initialization_vector", nullable = true, updatable = false) val iv: ByteArray?,
-                        @Column(name="encryption_service_uuid", nullable= true, updatable = false)val encryptionServiceUuid: UUID?,
+                        @Column(name="encryption_service_uuid", nullable= true, updatable = false)val encryptionUuid: UUID?,
                         @Column(name="encryption_is_symmetric", nullable = false, updatable = false ) val encryptionIsSymmetric: Boolean,
                         @Column(name="encryption_algorithm", nullable=false, updatable = false) val encryptionAlgorithm: String,
                         @Column(name="encryption_key_algorithm", nullable=false, updatable = false) val encryptionKeyAlgorithm: String,

@@ -25,9 +25,9 @@ import org.springframework.context.annotation.Configuration
  * Created by irotsoma on 8/18/2016.
  *
  * Configuration object for encryption services.
- * Loads application.properties settings that start with "encryptionservices".
+ * Loads application.properties settings that start with "encryptionextensions".
  */
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties("encryptionservices")
-class EncryptionServicesSettings : ExtensionSettings()
+@ConfigurationProperties("encryptionextensions")
+class EncryptionExtensionSettings : ExtensionSettings()

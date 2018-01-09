@@ -112,8 +112,8 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-annotations'
     //common classes
     compile "com.irotsoma.cloudbackenc:common:$commonVersion"
-    compile "com.irotsoma.cloudbackenc.common:cloudservicesserviceinterface:$commonVersion"
-    compile "com.irotsoma.cloudbackenc.common:encryptionserviceinterface:$commonVersion"
+    compile "com.irotsoma.cloudbackenc.common:cloudservices:$commonVersion"
+    compile "com.irotsoma.cloudbackenc.common:encryption:$commonVersion"
     //logging
     compile "io.github.microutils:kotlin-logging:$kotlinLoggingVersion"
     //apache
