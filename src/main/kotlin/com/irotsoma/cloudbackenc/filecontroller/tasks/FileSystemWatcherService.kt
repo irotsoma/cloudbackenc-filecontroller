@@ -20,14 +20,9 @@
 package com.irotsoma.cloudbackenc.filecontroller.tasks
 
 import com.irotsoma.cloudbackenc.common.Utilities.hashFile
-import com.irotsoma.cloudbackenc.common.encryption.EncryptionAlgorithms
-import com.irotsoma.cloudbackenc.common.encryption.EncryptionAsymmetricEncryptionAlgorithms
-import com.irotsoma.cloudbackenc.common.encryption.EncryptionFactory
-import com.irotsoma.cloudbackenc.common.encryption.EncryptionSymmetricEncryptionAlgorithms
+import com.irotsoma.cloudbackenc.filecontroller.BzipFile
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
 import com.irotsoma.cloudbackenc.filecontroller.data.*
-import com.irotsoma.cloudbackenc.filecontroller.encryption.BzipFile
-import com.irotsoma.cloudbackenc.filecontroller.encryption.EncryptionExtensionRepository
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
 import mu.KLogging
 import org.apache.commons.io.FileUtils
@@ -49,18 +44,11 @@ import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.StandardWatchEventKinds
 import java.nio.file.WatchService
-import java.security.Key
-import java.security.KeyFactory
-import java.security.SecureRandom
-import java.security.spec.X509EncodedKeySpec
 import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.LinkedBlockingQueue
 import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
-import javax.crypto.spec.IvParameterSpec
-import javax.crypto.spec.SecretKeySpec
-import kotlin.collections.HashMap
 
 
 /**
@@ -86,9 +74,9 @@ class FileSystemWatcherService {
     lateinit var storedFileRepository: StoredFileRepository
     @Autowired
     lateinit var storedFileVersionRepository: StoredFileVersionRepository
-    @Autowired
+   /* @Autowired
     lateinit var encryptionExtensionRepository: EncryptionExtensionRepository
-
+*/
     @Volatile private var watchService: WatchService? = null
 
     @Volatile private var filesToUpdate = LinkedBlockingQueue<UUID>()
@@ -191,8 +179,8 @@ class FileSystemWatcherService {
                 trustSelfSignedSSL()
                 logger.warn { "Central Controller SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
             }
-            val encryptionFactoryClasses = HashMap<UUID, EncryptionFactory?>()
-            val secureRandom = SecureRandom.getInstanceStrong()
+            //val encryptionFactoryClasses = HashMap<UUID, EncryptionFactory?>()
+            //val secureRandom = SecureRandom.getInstanceStrong()
 
             logger.trace{"Async process -- sendFileRequests $processUuid: Polling for changes."}
             val fileUuid = filesToUpdate.poll()
@@ -200,13 +188,15 @@ class FileSystemWatcherService {
                 val storedFile = storedFileRepository.findByUuid(fileUuid)
                 if (storedFile != null) {
 
-                    val compressedFile = File.createTempFile(FilenameUtils.getName(storedFile.path), ".bz2.tmp")
+                    val compressedFile = File.createTempFile(FilenameUtils.getName(storedFile.path), ".bz2")
                     val inputFile = File(storedFile.path)
                     BzipFile().compressFile(inputFile, compressedFile)
                     val watchedLocation = watchedLocationRepository.findByUuid(storedFile.watchedLocationUuid)
                     if (watchedLocation != null) {
+
+                        /* moving encryption to central controller
                         //load factory if it hasn't already been loaded
-                        val encryptionUuid = watchedLocation.encryptionUuid ?: UUID.fromString(encryptionExtensionRepository.encryptionExtensionSettings.defaultServiceUuid)
+                        val encryptionUuid = watchedLocation.encryptionUuid ?: UUID.fromString(encryptionExtensionRepository.encryptionExtensionSettings.defaultExtensionUuid)
                         if (!encryptionFactoryClasses.containsKey(encryptionUuid)) {
                             encryptionFactoryClasses.put(encryptionUuid, encryptionExtensionRepository.extensions[encryptionUuid]?.newInstance() as EncryptionFactory?)
                             if (encryptionFactoryClasses[encryptionUuid] == null) {
@@ -233,23 +223,24 @@ class FileSystemWatcherService {
                                 secureRandom.nextBytes(byteArray)
                                 ivParameterSpec =  IvParameterSpec(byteArray)
                             }
-                            val originalHash = hashFile(File(storedFile.path))
+
 
                             encryptionFactoryClasses[encryptionUuid]!!.encryptionFileService.encrypt(compressedFile.inputStream(), encryptedFile.outputStream(), encryptionKey, encryptionAlgorithm, ivParameterSpec, secureRandom)
 
                             val encryptedHash = hashFile(encryptedFile)
-
+                            */
+                            val hash = hashFile(File(storedFile.path))
                             val centralControllerURL = "$centralControllerProtocol://${centralControllerSettings.host}:${centralControllerSettings.port}/files"
+                            //TODO: better user token system
                             val requestHeaders = HttpHeaders()
                             requestHeaders.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                             requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer ${watchedLocation.user.token}")
                             val requestParameters = LinkedMultiValueMap<String, Any>()
-                            requestParameters.add("file", ClassPathResource(encryptedFile.absolutePath))
+                            requestParameters.add("file", ClassPathResource(compressedFile.absolutePath))
                             requestParameters.add("uuid", fileUuid)
                             val httpEntity = HttpEntity(requestParameters, requestHeaders)
                             val callResponse = RestTemplate().postForEntity(centralControllerURL, httpEntity, Pair::class.java)
 
-                            //TODO: better user token system
                             if (callResponse.statusCode == HttpStatus.OK) {
                                 val fileVersion = try {callResponse.body?.second as Long } catch (ignore:Exception) {null}
                                 val fileRemoteUUID = try {callResponse.body?.first as UUID} catch (ignore:Exception){null}
@@ -259,7 +250,8 @@ class FileSystemWatcherService {
                                     logger.debug { "File with local UUID $fileUuid uploaded and assigned remote UUID ${callResponse.body?.first}" }
 
                                     storedFile.lastUpdated = Date(inputFile.lastModified())
-                                    val newVersion = StoredFileVersion(storedFile.uuid, fileRemoteUUID, fileVersion, ivParameterSpec?.iv, watchedLocation.encryptionUuid, watchedLocation.encryptionIsSymmetric, watchedLocation.encryptionAlgorithm, watchedLocation.encryptionKeyAlgorithm, watchedLocation.encryptionBlockSize, watchedLocation.secretKey, watchedLocation.publicKey, Date(), originalHash, encryptedHash)
+                                    //val newVersion = StoredFileVersion(storedFile.uuid, fileRemoteUUID, fileVersion, ivParameterSpec?.iv, watchedLocation.encryptionUuid, watchedLocation.encryptionIsSymmetric, watchedLocation.encryptionAlgorithm, watchedLocation.encryptionKeyAlgorithm, watchedLocation.encryptionBlockSize, watchedLocation.secretKey, watchedLocation.publicKey, Date(), originalHash, encryptedHash)
+                                    val newVersion = StoredFileVersion(storedFile.uuid,fileRemoteUUID,fileVersion, Date(), hash)
                                     storedFileVersionRepository.saveAndFlush(newVersion)
                                     filesSent++
                                 }
@@ -270,10 +262,10 @@ class FileSystemWatcherService {
                                 logger.warn { "Error sending file with local UUID $fileUuid and path ${storedFile.path}" }
                                 logger.warn { "Server returned ${callResponse.statusCode.name}" }
                             }
-                        } else {
-                            logger.warn { "Skipping file with UUID $fileUuid because the encryption service with UUID $encryptionUuid failed to load." }
-                            logger.warn { "Fix the encryption service plugin and restart the service to process these files." }
-                        }
+//                        } else {
+//                            logger.warn { "Skipping file with UUID $fileUuid because the encryption service with UUID $encryptionUuid failed to load." }
+//                            logger.warn { "Fix the encryption service plugin and restart the service to process these files." }
+//                        }
                     } else {
                         //TODO: handle watched location uuid is not in DB
                     }

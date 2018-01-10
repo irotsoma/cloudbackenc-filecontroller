@@ -16,7 +16,7 @@
 /*
  * Created by irotsoma on 11/14/16.
  */
-package com.irotsoma.cloudbackenc.filecontroller.encryption
+package com.irotsoma.cloudbackenc.filecontroller
 
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream

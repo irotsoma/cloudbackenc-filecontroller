@@ -32,14 +32,15 @@ import javax.persistence.*
 @Entity
 @Table(name="watched_location")
 class WatchedLocation(@Id @Column(name="uuid", unique = true, nullable = false)var uuid: UUID,
-                      @ManyToOne(fetch=FetchType.EAGER) @JoinColumn(name="user_id", referencedColumnName="id", nullable = true) var user: CentralControllerUser,
-                      @Column(name="path",nullable=false) var path: String,
-                      @Column(name="recursive",nullable=true)var recursive: Boolean?,
-                      @Column(name="filter", nullable = true) var filter: String?,
-                      @Column(name="encryption_service_uuid", nullable= true)var encryptionUuid: UUID?,
-                      @Column(name="encryption_algorithm", nullable=false) var encryptionAlgorithm: String,
-                      @Column(name="encryption_block_size",nullable=false)var encryptionBlockSize: Int,
-                      @Column(name="encryption_key_algorithm", nullable=false) var encryptionKeyAlgorithm: String,
-                      @Column(name="encryption_is_symmetric", nullable = false ) var encryptionIsSymmetric: Boolean,
-                      @Column(name="secret_key", nullable = false) var secretKey:String,
-                      @Column(name="public_key", nullable = true) var publicKey:String?)
+                      @ManyToOne(fetch=FetchType.EAGER) @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = true) var user: CentralControllerUser,
+                      @Column(name="path",nullable = false) var path: String,
+                      @Column(name="recursive",nullable = true)var recursive: Boolean?,
+                      @Column(name="filter", nullable = true) var filter: String?
+//                      @Column(name="encryption_service_uuid", nullable= true)var encryptionUuid: UUID?,
+//                      @Column(name="encryption_algorithm", nullable=false) var encryptionAlgorithm: String,
+//                      @Column(name="encryption_block_size",nullable=false)var encryptionBlockSize: Int,
+//                      @Column(name="encryption_key_algorithm", nullable=false) var encryptionKeyAlgorithm: String,
+//                      @Column(name="encryption_is_symmetric", nullable = false ) var encryptionIsSymmetric: Boolean,
+//                      @Column(name="secret_key", nullable = false) var secretKey:String,
+//                      @Column(name="public_key", nullable = true) var publicKey:String?
+                      )

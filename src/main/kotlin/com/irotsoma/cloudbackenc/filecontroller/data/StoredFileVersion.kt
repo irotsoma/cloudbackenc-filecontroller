@@ -34,6 +34,7 @@ import javax.persistence.*
 class StoredFileVersion(@ManyToOne(targetEntity = StoredFile::class) @JoinColumn(name="stored_file_uuid", unique = true, nullable = false, updatable = false)val storedFileUuid: UUID,
                         @Column(name="remote_file_uuid", nullable=true, updatable = false) val remoteFileUuid: UUID?,
                         @Column(name="remote_file_version", nullable=false, updatable = false) val remoteFileVersion: Long?,
+                        /* moving encryption to central controller
                         @Column(name="initialization_vector", nullable = true, updatable = false) val iv: ByteArray?,
                         @Column(name="encryption_service_uuid", nullable= true, updatable = false)val encryptionUuid: UUID?,
                         @Column(name="encryption_is_symmetric", nullable = false, updatable = false ) val encryptionIsSymmetric: Boolean,
@@ -42,9 +43,10 @@ class StoredFileVersion(@ManyToOne(targetEntity = StoredFile::class) @JoinColumn
                         @Column(name="encryption_block_size",nullable=false, updatable = false)val encryptionBlockSize: Int,
                         @Column(name="secret_key", nullable = false, updatable = false) val secretKey:String,
                         @Column(name="public_key", nullable = true, updatable = false) val publicKey: String?,
+                        */
                         @Column(name="timestamp", nullable = false, updatable = false) val timestamp:Date,
-                        @Column(name="original_hash", nullable=false, updatable = false)val originalHash: String?,
-                        @Column(name="encrypted_hash", nullable=false, updatable = false)val encryptedHash: String?) {
+                        @Column(name="original_hash", nullable=false, updatable = false)val originalHash: String?/*,
+                        @Column(name="encrypted_hash", nullable=false, updatable = false)val encryptedHash: String?*/) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private var id: Long = -1

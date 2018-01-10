@@ -17,23 +17,12 @@
 package com.irotsoma.cloudbackenc.filecontroller.encryption
 
 
-import com.irotsoma.cloudbackenc.common.ExtensionRepository
-import com.irotsoma.cloudbackenc.common.encryption.EncryptionException
-import com.irotsoma.cloudbackenc.common.encryption.EncryptionExtension
-import com.irotsoma.cloudbackenc.common.encryption.EncryptionFactory
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.ApplicationContext
-import org.springframework.context.ApplicationContextAware
-import org.springframework.context.ConfigurableApplicationContext
-import org.springframework.stereotype.Component
-import javax.annotation.PostConstruct
-
 /**
  * Created by irotsoma on 8/18/2016.
  *
  * Implements the encryption extensions repository
  */
-
+/*
 @Component
 class EncryptionExtensionRepository : ExtensionRepository(), ApplicationContextAware {
 
@@ -54,4 +43,4 @@ class EncryptionExtensionRepository : ExtensionRepository(), ApplicationContextA
         loadDynamicServices<EncryptionFactory, EncryptionExtension>()
     }
 }
-
+*/
