@@ -52,4 +52,20 @@ class CentralControllerSettings {
      * How often should central controller tokens be refreshed.  Default 1 day (86400000 ms)
      */
     var tokenRefreshInterval: Int = 86400000
+    /**
+     * Path to the cloud services rest service
+     */
+    var cloudServicesPath: String = ""
+    /**
+     * Path to the users rest service
+     */
+    var usersPath: String = ""
+    /**
+     * Path to the auth rest service
+     */
+    var authPath: String = ""
+    /**
+     * Path to the files rest service
+     */
+    var filesPath: String = ""
 }

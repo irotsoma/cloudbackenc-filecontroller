@@ -52,7 +52,7 @@ class RefreshUserTokens {
             trustSelfSignedSSL()
             logger.warn { "Central Controller SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
         }
-        val centralControllerURL = "$centralControllerProtocol://${centralControllerSettings.host}:${centralControllerSettings.port}/auth/token"
+        val centralControllerURL = "$centralControllerProtocol://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.authPath}/token"
 
         val currentUsers = centralControllerUserRepository.findByTokenNotNull() ?: return
         for (user in currentUsers) {

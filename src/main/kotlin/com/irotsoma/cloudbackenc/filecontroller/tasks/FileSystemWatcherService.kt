@@ -230,7 +230,7 @@ class FileSystemWatcherService {
                             val encryptedHash = hashFile(encryptedFile)
                             */
                             val hash = hashFile(File(storedFile.path))
-                            val centralControllerURL = "$centralControllerProtocol://${centralControllerSettings.host}:${centralControllerSettings.port}/files"
+                            val centralControllerURL = "$centralControllerProtocol://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.filesPath}"
                             //TODO: better user token system
                             val requestHeaders = HttpHeaders()
                             requestHeaders.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
