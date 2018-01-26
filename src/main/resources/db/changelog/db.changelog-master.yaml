@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016-2017  Irotsoma, LLC
+# Copyright (C) 2016-2018  Irotsoma, LLC
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -115,6 +115,14 @@ databaseChangeLog:
 #                  type: varbinary(5000)
 #                  constraints:
 #                    nullable: true
+        - addForeignKeyConstraint:
+            baseColumnNames: user_id
+            baseTableName: watched_location
+            constraintName: fk__watched_location__user
+            onDelete: CASCADE
+            onUpdate: RESTRICT
+            referencedColumnNames: id
+            referencedTableName: central_controller_user
         - createTable:
             tableName: stored_file
             columns:
@@ -139,6 +147,14 @@ databaseChangeLog:
                   type: datetime
                   constraints:
                     nullable: false
+        - addForeignKeyConstraint:
+            baseColumnNames: watched_location_uuid
+            baseTableName: stored_file
+            constraintName: fk__stored_file__watched_location
+            onDelete: CASCADE
+            onUpdate: RESTRICT
+            referencedColumnNames: uuid
+            referencedTableName: watched_location
         - createTable:
             tableName: stored_file_version
             columns:
@@ -217,4 +233,12 @@ databaseChangeLog:
                   name: timestamp
                   type: datetime
                   constraints:
-                    nullable: true
+                    nullable: false
+              - addForeignKeyConstraint:
+                  baseColumnNames: stored_file_uuid
+                  baseTableName: stored_file_version
+                  constraintName: fk__stored_file_version__stored_file
+                  onDelete: CASCADE
+                  onUpdate: RESTRICT
+                  referencedColumnNames: uuid
+                  referencedTableName: stored_file

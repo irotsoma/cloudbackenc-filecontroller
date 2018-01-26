@@ -19,6 +19,7 @@
  */
 package com.irotsoma.cloudbackenc.filecontroller.tasks
 
+import com.irotsoma.cloudbackenc.common.AuthenticationToken
 import com.irotsoma.cloudbackenc.common.Utilities.hashFile
 import com.irotsoma.cloudbackenc.filecontroller.BzipFile
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
@@ -30,11 +31,9 @@ import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.ClassPathResource
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
+import org.springframework.http.*
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.util.LinkedMultiValueMap
@@ -64,25 +63,27 @@ class FileSystemWatcherService {
     companion object: KLogging(){
         /** Time to wait for a new poll event before checking if the service is shutting down. */
         private const val POLL_TIMEOUT = 5000L
+        /** Interval between checking for blacklisted users' updated credentials */
+        private const val RECHECK_BLACKLISTED_USERS_INTERVAL = 30000L
     }
 
-    @Autowired
-    lateinit var watchedLocationRepository: WatchedLocationRepository
-    @Autowired
-    lateinit var centralControllerSettings: CentralControllerSettings
-    @Autowired
-    lateinit var storedFileRepository: StoredFileRepository
-    @Autowired
-    lateinit var storedFileVersionRepository: StoredFileVersionRepository
+    @Autowired lateinit var watchedLocationRepository: WatchedLocationRepository
+    @Autowired lateinit var centralControllerSettings: CentralControllerSettings
+    @Autowired lateinit var storedFileRepository: StoredFileRepository
+    @Autowired lateinit var storedFileVersionRepository: StoredFileVersionRepository
+    @Autowired lateinit var centralControllerUserRepository: CentralControllerUserRepository
    /* @Autowired
     lateinit var encryptionExtensionRepository: EncryptionExtensionRepository
 */
+    @Value("\${filecontroller.frequencies.recheckblacklist}")
+    private var recheckBlacklistFrequency = 600000L
+
     @Volatile private var watchService: WatchService? = null
-
     @Volatile private var filesToUpdate = LinkedBlockingQueue<UUID>()
-
     @Volatile private var keepRunning = false
     @Volatile private var runningSendProcesses = mutableListOf<UUID>()
+
+    val userBlacklist = HashMap<String, Date>()
 
     @PostConstruct
     fun initializeService(){
@@ -116,7 +117,7 @@ class FileSystemWatcherService {
                             var storedFile = storedFileRepository.findByPathAndWatchedLocationUuid(watchedFile.absolutePath, watchedLocation.uuid)
                             //add the file to the database if it doesn't exist
                             if (storedFile == null) {
-                                storedFile = StoredFile(UUID.randomUUID(), watchedLocation.uuid, watchedFile.absolutePath, Date(0L))
+                                storedFile = StoredFile(UUID.randomUUID(), watchedLocation, watchedFile.absolutePath, Date(0L))
                                 storedFileRepository.save(storedFile)
                             }
 
@@ -136,7 +137,7 @@ class FileSystemWatcherService {
     /**
      * Periodically polls the file system watchers and adds any changed files to a queue to be sent to the central controller
      */
-    @Scheduled(initialDelay = 1000, fixedDelayString="\${filecontroller.poll.frequency}")
+    @Scheduled(initialDelay = 1000, fixedDelayString="\${filecontroller.frequencies.filepoll}")
     fun pollWatchers(): Future<Any>? {
         var filesChanged = 0L
         val processUuid = UUID.randomUUID()
@@ -166,6 +167,46 @@ class FileSystemWatcherService {
         return null
     }
 
+    /**
+     * Cycles through any blacklisted user IDs if they were blacklisted more than the configured interval ago.
+     * Tries to get a new user token from the central controller and if successful with the current token, removes the user from the blacklist.
+     * The token would need to be externally updated in order for this to happen.
+     */
+    @Scheduled(fixedDelay = RECHECK_BLACKLISTED_USERS_INTERVAL)
+    fun recheckBlacklist(): Future<Any>?{
+        val centralControllerProtocol = if (centralControllerSettings.useSSL) "https" else "http"
+        //for testing use a hostname verifier that doesn't do any verification
+        if ((centralControllerSettings.useSSL) && (centralControllerSettings.disableCertificateValidation)) {
+            trustSelfSignedSSL()
+            logger.warn { "Central Controller SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
+        }
+        val centralControllerURL = "$centralControllerProtocol://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.authPath}/token"
+        for(entry in userBlacklist) {
+            if (Date().time >= entry.value.time + recheckBlacklistFrequency) {
+                val user = centralControllerUserRepository.findByUsername(entry.key)
+                if (user != null) {
+                    val requestHeaders = HttpHeaders()
+                    requestHeaders.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer ${user.token}")
+                    val httpEntity = HttpEntity<Any>(requestHeaders)
+                    val response : ResponseEntity<AuthenticationToken>? =
+                        try {
+                            RestTemplate().exchange(centralControllerURL, HttpMethod.GET, httpEntity, AuthenticationToken::class.java)
+                        } catch (ignore: Exception) { null }
+                    if (response?.body?.token != null){
+                        user.token = response.body?.token
+                        centralControllerUserRepository.save(user)
+                        userBlacklist.remove(entry.key)
+                    }
+                }
+            }
+        }
+        return null
+    }
+
+    /**
+     * Periodically attempts to send any queued files to the central controller for storing on a cloud service provider.
+     */
     @Scheduled(fixedDelay = POLL_TIMEOUT)
     fun sendFileRequests(): Future<Any>?{
         if (keepRunning){
@@ -182,17 +223,13 @@ class FileSystemWatcherService {
             //val encryptionFactoryClasses = HashMap<UUID, EncryptionFactory?>()
             //val secureRandom = SecureRandom.getInstanceStrong()
 
-            logger.trace{"Async process -- sendFileRequests $processUuid: Polling for changes."}
+            logger.trace{"Async process -- sendFileRequests $processUuid: Sending any changed files."}
             val fileUuid = filesToUpdate.poll()
             if (fileUuid != null) {
                 val storedFile = storedFileRepository.findByUuid(fileUuid)
                 if (storedFile != null) {
-
-                    val compressedFile = File.createTempFile(FilenameUtils.getName(storedFile.path), ".bz2")
-                    val inputFile = File(storedFile.path)
-                    BzipFile().compressFile(inputFile, compressedFile)
-                    val watchedLocation = watchedLocationRepository.findByUuid(storedFile.watchedLocationUuid)
-                    if (watchedLocation != null) {
+                    val watchedLocation = storedFile.watchedLocation
+                    if (watchedLocation.user.username !in userBlacklist.keys) {
 
                         /* moving encryption to central controller
                         //load factory if it hasn't already been loaded
@@ -230,6 +267,9 @@ class FileSystemWatcherService {
                             val encryptedHash = hashFile(encryptedFile)
                             */
                             val hash = hashFile(File(storedFile.path))
+                            val compressedFile = File.createTempFile(FilenameUtils.getName(storedFile.path), ".bz2")
+                            val inputFile = File(storedFile.path)
+                            BzipFile().compressFile(inputFile, compressedFile)
                             val centralControllerURL = "$centralControllerProtocol://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.filesPath}"
                             //TODO: better user token system
                             val requestHeaders = HttpHeaders()
@@ -247,18 +287,22 @@ class FileSystemWatcherService {
                                 if (fileVersion == null || fileRemoteUUID == null){
                                     logger.error{"Invalid Remote UUID or version number returned from central controller. Values: ${callResponse.body?.first}, ${callResponse.body?.second}"}
                                 } else {
-                                    logger.debug { "File with local UUID $fileUuid uploaded and assigned remote UUID ${callResponse.body?.first}" }
+                                    logger.trace { "File with local UUID $fileUuid uploaded and assigned remote UUID ${callResponse.body?.first}" }
 
                                     storedFile.lastUpdated = Date(inputFile.lastModified())
                                     //val newVersion = StoredFileVersion(storedFile.uuid, fileRemoteUUID, fileVersion, ivParameterSpec?.iv, watchedLocation.encryptionUuid, watchedLocation.encryptionIsSymmetric, watchedLocation.encryptionAlgorithm, watchedLocation.encryptionKeyAlgorithm, watchedLocation.encryptionBlockSize, watchedLocation.secretKey, watchedLocation.publicKey, Date(), originalHash, encryptedHash)
-                                    val newVersion = StoredFileVersion(storedFile.uuid,fileRemoteUUID,fileVersion, Date(), hash)
+                                    val newVersion = StoredFileVersion(storedFile,fileRemoteUUID,fileVersion, hash, Date())
                                     storedFileVersionRepository.saveAndFlush(newVersion)
                                     filesSent++
                                 }
 
+                            } else if(callResponse.statusCode == HttpStatus.UNAUTHORIZED) {
+                                //add user to blacklist so their files will not be processed until their credentials are updated.
+                                userBlacklist.put(watchedLocation.user.username, Date())
+                                logger.debug { "Error sending file with local UUID $fileUuid and path ${storedFile.path}" }
+                                logger.debug { "Server returned ${ callResponse.statusCode.name }" }
+                                logger.debug { "User ${watchedLocation.user.username} has been temporarily blacklisted."}
                             } else {
-                                //TODO: if error was for auth failure, skip all other files for this user to reduce bandwidth and log spam
-
                                 logger.warn { "Error sending file with local UUID $fileUuid and path ${storedFile.path}" }
                                 logger.warn { "Server returned ${callResponse.statusCode.name}" }
                             }
@@ -267,15 +311,15 @@ class FileSystemWatcherService {
 //                            logger.warn { "Fix the encryption service plugin and restart the service to process these files." }
 //                        }
                     } else {
-                        //TODO: handle watched location uuid is not in DB
+                        logger.debug{"Skipping file with local UUID $fileUuid and path ${storedFile.path}: User ${watchedLocation.user.username} is blacklisted."}
                     }
-                } else{
+                } else {
 
-                    //TODO: handle stored file uuid is not in DB
+                    logger.error{"Queued file with local UUID $fileUuid is missing from the database. This file will be skipped."}
                 }
                 logger.trace {"Async process -- sendFileRequests $processUuid: Process ending.  Files sent to central controller: $filesSent."}
             } else {
-                logger.trace {"Async process -- sendFileRequests $processUuid: No changes detected."}
+                logger.trace {"Async process -- sendFileRequests $processUuid: No files to send."}
             }
             runningSendProcesses.remove(processUuid)
         }

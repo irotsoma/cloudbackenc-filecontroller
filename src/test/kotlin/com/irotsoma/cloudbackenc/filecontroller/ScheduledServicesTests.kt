@@ -14,19 +14,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-/*
- * Created by irotsoma on 7/21/17.
- */
-package com.irotsoma.cloudbackenc.filecontroller.data
+package com.irotsoma.cloudbackenc.filecontroller
 
-import org.springframework.data.jpa.repository.JpaRepository
-import java.util.*
+import com.irotsoma.cloudbackenc.filecontroller.tasks.FileSystemWatcherService
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.junit4.SpringRunner
 
-/**
- *
- *
- * @author Justin Zak
- */
-interface StoredFileVersionRepository: JpaRepository<StoredFileVersion, Long>{
-    fun findByStoredFileUuid(uuid: UUID): List<StoredFileVersion>?
+@RunWith(SpringRunner::class)
+@SpringBootTest(webEnvironment= SpringBootTest.WebEnvironment.DEFINED_PORT)
+class ScheduledServicesTests {
+    @Autowired lateinit var fileSystemWatcherService: FileSystemWatcherService
+
+    @Test
+    fun testReloadFileSystemWatcherService(){
+
+        assert(fileSystemWatcherService.reloadWatchServices())
+    }
 }

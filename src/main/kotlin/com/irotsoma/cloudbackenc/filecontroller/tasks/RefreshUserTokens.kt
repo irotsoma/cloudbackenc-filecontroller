@@ -44,7 +44,7 @@ class RefreshUserTokens {
     @Autowired
     lateinit var centralControllerSettings: CentralControllerSettings
 
-    @Scheduled(fixedDelayString="\${centralcontroller.tokenRefreshInterval}")
+    @Scheduled(fixedDelayString="\${filecontroller.frequencies.tokenrefresh}")
     fun doRefresh(){
         val centralControllerProtocol = if (centralControllerSettings.useSSL) "https" else "http"
         //for testing use a hostname verifier that doesn't do any verification

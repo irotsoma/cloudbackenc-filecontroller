@@ -30,5 +30,4 @@ import java.util.*
 interface WatchedLocationRepository: JpaRepository<WatchedLocation, Long>{
     //fun findByPath(path:String): List<WatchedLocation>
     fun findByUuid(uuid:UUID): WatchedLocation?
-
 }

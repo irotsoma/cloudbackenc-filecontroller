@@ -30,9 +30,11 @@ import javax.persistence.*
 @Entity
 @Table(name="stored_file")
 class StoredFile(@Id @Column(name="uuid", unique = true, nullable = false, updatable = false)val uuid: UUID,
-                 @Column(name="watched_location_uuid", nullable = false, updatable = false)val watchedLocationUuid: UUID,
+                 @ManyToOne(fetch=FetchType.EAGER) @JoinColumn(name="watched_location_uuid", unique = false, nullable = false, updatable = false)val watchedLocation: WatchedLocation,
                  @Column(name="path", nullable=false, updatable = false) val path: String,
                  @Column(name="last_updated", nullable=false) var lastUpdated: Date){
     @OneToMany(mappedBy = "storedFileUuid", fetch = FetchType.LAZY)
     var storedFileVersions: Set<StoredFileVersion>? = hashSetOf()
+    @Column(name="watched_location_uuid", unique = false, nullable = false, updatable = false,insertable = false)
+    lateinit var watchedLocationUuid:UUID
 }

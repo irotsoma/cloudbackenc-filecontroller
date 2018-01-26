@@ -21,6 +21,7 @@ package com.irotsoma.cloudbackenc.filecontroller.webui
 
 import com.samskivert.mustache.Mustache
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ModelAttribute
 
@@ -35,6 +36,11 @@ class LayoutAdvice {
     @Autowired
     private lateinit var compiler: Mustache.Compiler
 
+    @Value("\${filecontroller.webui.bootstrapVersion}")
+    private lateinit var bootstrapVersion:String
+
+    @Value("\${filecontroller.webui.jqueryVersion}")
+    private lateinit var jqueryVersion:String
 
     @ModelAttribute("layout")
     fun layout(model: Map<String, Any>): Mustache.Lambda {
@@ -50,5 +56,12 @@ class LayoutAdvice {
     fun menus(): Iterable<Menu> {
         return MainMenu().menuItems
     }
+
+    @ModelAttribute("bootstrapVersion")
+    fun bootstrapVersion() = bootstrapVersion
+
+    @ModelAttribute("jqueryVersion")
+    fun jqueryVersion() = jqueryVersion
+
 
 }

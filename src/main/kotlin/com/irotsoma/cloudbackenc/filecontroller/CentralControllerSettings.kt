@@ -30,7 +30,7 @@ import org.springframework.context.annotation.Configuration
  */
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties("centralcontroller")
+@ConfigurationProperties(prefix="centralcontroller")
 class CentralControllerSettings {
     /**
      * Central Controller REST port number
@@ -48,10 +48,6 @@ class CentralControllerSettings {
      * Disables SSL certificate validation.  Should only be true for testing purposes with self signed certificates.
      */
     var disableCertificateValidation: Boolean = false
-    /**
-     * How often should central controller tokens be refreshed.  Default 1 day (86400000 ms)
-     */
-    var tokenRefreshInterval: Int = 86400000
     /**
      * Path to the cloud services rest service
      */
