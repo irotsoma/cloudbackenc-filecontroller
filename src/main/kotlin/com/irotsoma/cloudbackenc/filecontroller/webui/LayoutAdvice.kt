@@ -36,10 +36,13 @@ class LayoutAdvice {
     @Autowired
     private lateinit var compiler: Mustache.Compiler
 
-    @Value("\${filecontroller.webui.bootstrapVersion}")
+    @Autowired
+    private lateinit var mainMenu: MainMenu
+
+    @Value("\${filecontroller.webui.dependencies.bootstrapVersion}")
     private lateinit var bootstrapVersion:String
 
-    @Value("\${filecontroller.webui.jqueryVersion}")
+    @Value("\${filecontroller.webui.dependencies.jqueryVersion}")
     private lateinit var jqueryVersion:String
 
     @ModelAttribute("layout")
@@ -49,12 +52,12 @@ class LayoutAdvice {
 
     @ModelAttribute("title")
     fun defaults(@ModelAttribute layout: Layout): Mustache.Lambda {
-        return Mustache.Lambda { frag, out -> layout.title = frag.execute() }
+        return Mustache.Lambda { frag, _ -> layout.title = frag.execute() }
     }
 
     @ModelAttribute("menus")
     fun menus(): Iterable<Menu> {
-        return MainMenu().menuItems
+        return mainMenu.menus
     }
 
     @ModelAttribute("bootstrapVersion")

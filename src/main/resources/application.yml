@@ -14,15 +14,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
 
-app.menus:
-  - name: Home
-    path: /
-  - name: Login
-    path: /login
 spring:
   mustache:
     expose-request-attributes: true
-filecontroller:
-  webui:
+filecontroller.webui:
+  dependencies:
     bootstrapVersion: 4.0.0
     jqueryVersion: 3.2.1
+filecontroller.webui.menus:
+  menuLayout:
+    - nameProperty: filecontroller.menu.home
+      path: /
+    - nameProperty: filecontroller.menu.users
+      menuItems:
+        - nameProperty: filecontroller.menuitem.login
+          path: /login
+        - nameProperty: filecontroller.menuitem.userlist
+          path: /users
+        - nameProperty: filecontroller.menuitem.newuser
+          path: /users/new

@@ -14,29 +14,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-/*
- * Created by irotsoma on 8/11/17.
- */
 package com.irotsoma.cloudbackenc.filecontroller.webui
 
-/**
- *
- *
- * @author Justin Zak
- */
-class Menu() {
-    var nameProperty: String = ""
+class MenuItem(){
+    var nameProperty: String =""
     var name: String = ""
-    var path: String? = null
-    var menuItems:ArrayList<MenuItem> = ArrayList()
-    var containsMenuItems = false
-    constructor(nameProperty:String, name:String, path:String?, menuItems:ArrayList<MenuItem>): this() {
+    var path: String = ""
+    constructor(nameProperty:String, name:String, path:String):this(){
         this.nameProperty=nameProperty
-        this.name = name
+        this.name=name
         this.path=path
-        this.menuItems=menuItems
-        if (menuItems.size > 0){
-            containsMenuItems = true
-        }
     }
 }

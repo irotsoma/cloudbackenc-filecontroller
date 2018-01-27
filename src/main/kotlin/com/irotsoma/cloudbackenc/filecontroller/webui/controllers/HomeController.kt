@@ -33,7 +33,6 @@ import org.springframework.web.bind.annotation.GetMapping
 internal class HomeController {
     @GetMapping("/")
     fun home(model: Model): String {
-        //model.addAttribute("bootstrapVersion","4.0.0")
         return "index"
     }
 }

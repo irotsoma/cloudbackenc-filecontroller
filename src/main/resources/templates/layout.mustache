@@ -26,16 +26,34 @@
     <link rel="stylesheet" type="text/css"
           href="/webjars/bootstrap/{{bootstrapVersion}}/css/bootstrap.min.css" />
     <script type="text/javascript"
-            src="/webjars/jquery/3.2.1/jquery.min.js"></script>
+            src="/webjars/jquery/{{jqueryVersion}}/jquery.min.js"></script>
     <script type="text/javascript"
             src="webjars/bootstrap/{{bootstrapVersion}}/js/bootstrap.min.js"></script>
 </head>
 <body>
-<!--    <div class="container">
-        <ul class="nav nav-pills" role="tablist">
-            {{#menus}}<li><a href="{{path}}">{{name}}</a></li>{{/menus}}
-        </ul>
-    </div>-->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavDropdown">
+            <ul class="navbar-nav">
+            {{#menus}}
+                <li class="nav-item{{#containsMenuItems}} dropdown{{/containsMenuItems}}">
+                    <a class="nav-link{{#containsMenuItems}} dropdown-toggle{{/containsMenuItems}}" href="{{#path}}{{.}}{{/path}}{{^path}}#{{/path}}"{{#containsMenuItems}} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"{{/containsMenuItems}}>{{name}}</a>
+                    {{#containsMenuItems}}
+                        <div class="dropdown-menu">
+                    {{/containsMenuItems}}
+                    {{#menuItems}}
+                                <a class="dropdown-item" href="{{path}}">{{name}}</a>
+                    {{/menuItems}}
+                    {{#containsMenuItems}}
+                        </div>
+                    {{/containsMenuItems}}
+                </li>
+            {{/menus}}
+            </ul>
+        </div>
+    </nav>
     {{{layout.body}}}
 </body>
 </html>

@@ -20,6 +20,7 @@
 package com.irotsoma.cloudbackenc.filecontroller.webui
 
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.stereotype.Component
@@ -33,19 +34,24 @@ import javax.annotation.PostConstruct
  * @author Justin Zak
  */
 @Component
+@ConfigurationProperties(prefix="filecontroller.webui.menus")
 class MainMenu {
 
     @Autowired
     private lateinit var messageSource: MessageSource
 
-    val menuItems = ArrayList<Menu>()
+    val menuLayout = ArrayList<Menu>()
+
+    val menus = ArrayList<Menu>()
 
     @PostConstruct
     private fun populateValues(){
         val locale = LocaleContextHolder.getLocale()
-        menuItems.add(Menu(messageSource.getMessage("filecontroller.menuitem.login",null,locale),"/login"))
-        menuItems.add(Menu(messageSource.getMessage("filecontroller.menuitem.users",null,locale),"/users"))
-        menuItems.add(Menu(messageSource.getMessage("filecontroller.menuitem.setup.cloud.services",null,locale),"/cloud-services"))
-
+        //translate properties into a localized names
+        for (menu in menuLayout){
+            val menuItemsHolder = ArrayList<MenuItem>()
+            menu.menuItems.mapTo(menuItemsHolder) { MenuItem(it.nameProperty, messageSource.getMessage(it.nameProperty, null, locale), it.path) }
+            menus.add(Menu(menu.nameProperty, messageSource.getMessage(menu.nameProperty, null, locale), menu.path, menuItemsHolder))
+        }
     }
 }

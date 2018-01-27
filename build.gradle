@@ -105,7 +105,7 @@ dependencies {
     compile 'org.springframework.boot:spring-boot-starter-integration'
     compile 'org.springframework.boot:spring-boot-starter-mustache'
     optional 'org.springframework.boot:spring-boot-devtools'
-    //optional 'org.springframework.boot:spring-boot-configuration-processor'
+    optional 'org.springframework.boot:spring-boot-configuration-processor'
     kapt 'org.springframework.boot:spring-boot-configuration-processor'
     //jackson
     compile 'com.fasterxml.jackson.module:jackson-module-kotlin'
