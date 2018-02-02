@@ -33,3 +33,5 @@ filecontroller.webui.menus:
           path: /users
         - nameProperty: filecontroller.menuitem.newuser
           path: /users/new
+management.endpoints.web:
+  expose: "*"

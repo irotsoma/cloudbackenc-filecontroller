@@ -1,0 +1,32 @@
+<!--
+  ~ Copyright (C) 2016-2018  Irotsoma, LLC
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Lesser General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU Lesser General Public License for more details.
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>
+  -->
+
+{{#layout}}{{#title}}Login{{/title}}
+    <h1>Login</h1>
+<div class="container form-group">
+    <form id="login-form" action="/login" method="POST">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" class="form-control{{#usernameError}} is-invalid{{/usernameError}}" {{#username}}value="{{.}}"{{/username}} required />
+        {{#usernameError}}<div class="invalid-feedback">{{.}}</div>{{/usernameError}}
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" class="form-control{{#passwordError}} is-invalid{{/passwordError}}" required />
+        {{#passwordError}}<div class="invalid-feedback">{{.}}</div>{{/passwordError}}
+
+        <button id="login-submit" type="submit" class="form-button">Submit</button>
+    </form>
+    {{#formError}}<div class="invalid-feedback">{{.}}</div>{{/formError}}
+</div>
+{{/layout}}
