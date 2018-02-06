@@ -29,9 +29,9 @@ filecontroller.webui.menus:
       menuItems:
         - nameProperty: filecontroller.menuitem.login
           path: /login
-        - nameProperty: filecontroller.menuitem.userlist
-          path: /users
+        - nameProperty: filecontroller.menuitem.userinfo
+          path: /userinfo
         - nameProperty: filecontroller.menuitem.newuser
-          path: /users/new
+          path: /newuser
 management.endpoints.web:
   expose: "*"

@@ -63,8 +63,6 @@ class FileSystemWatcherService {
     companion object: KLogging(){
         /** Time to wait for a new poll event before checking if the service is shutting down. */
         private const val POLL_TIMEOUT = 5000L
-        /** Interval between checking for blacklisted users' updated credentials */
-        private const val RECHECK_BLACKLISTED_USERS_INTERVAL = 30000L
     }
 
     @Autowired lateinit var watchedLocationRepository: WatchedLocationRepository
@@ -137,14 +135,12 @@ class FileSystemWatcherService {
     /**
      * Periodically polls the file system watchers and adds any changed files to a queue to be sent to the central controller
      */
-    @Scheduled(initialDelay = 1000, fixedDelayString="\${filecontroller.frequencies.filepoll}")
+    @Scheduled(initialDelay = 1000, fixedDelay=POLL_TIMEOUT)
     fun pollWatchers(): Future<Any>? {
         var filesChanged = 0L
-        val processUuid = UUID.randomUUID()
-        logger.debug{"Async process -- pollWatcher $processUuid: Executing poll watcher function."  }
-
         if (keepRunning) {
-
+            val processUuid = UUID.randomUUID()
+            logger.trace{"Async process -- pollWatcher $processUuid: Executing poll watcher function."  }
             var watchKey = watchService?.poll()
             while (watchKey != null) {
                 watchKey.pollEvents().forEach { event ->
@@ -162,8 +158,8 @@ class FileSystemWatcherService {
                 }
                 watchKey = watchService?.poll()
             }
+            logger.trace {"Async process -- pollWatcher $processUuid: Process finished.  Files added to queue: $filesChanged."}
         }
-        logger.trace {"Async process -- pollWatcher $processUuid: Process finished.  Files added to queue: $filesChanged."}
         return null
     }
 
@@ -172,7 +168,7 @@ class FileSystemWatcherService {
      * Tries to get a new user token from the central controller and if successful with the current token, removes the user from the blacklist.
      * The token would need to be externally updated in order for this to happen.
      */
-    @Scheduled(fixedDelay = RECHECK_BLACKLISTED_USERS_INTERVAL)
+    @Scheduled(fixedDelayString = "\${filecontroller.frequencies.recheckblacklist}")
     fun recheckBlacklist(): Future<Any>?{
         val centralControllerProtocol = if (centralControllerSettings.useSSL) "https" else "http"
         //for testing use a hostname verifier that doesn't do any verification
@@ -180,11 +176,13 @@ class FileSystemWatcherService {
             trustSelfSignedSSL()
             logger.warn { "Central Controller SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
         }
-        val centralControllerURL = "$centralControllerProtocol://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.authPath}/token"
+        val processUuid = UUID.randomUUID()
+        logger.trace{"Async process -- recheckBlackList $processUuid: Running process to check for updated credentials."  }
         for(entry in userBlacklist) {
             if (Date().time >= entry.value.time + recheckBlacklistFrequency) {
                 val user = centralControllerUserRepository.findByUsername(entry.key)
                 if (user != null) {
+                    val centralControllerURL = "$centralControllerProtocol://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.authPath}/token"
                     val requestHeaders = HttpHeaders()
                     requestHeaders.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                     requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer ${user.token}")
@@ -201,19 +199,20 @@ class FileSystemWatcherService {
                 }
             }
         }
+        logger.trace {"Async process -- recheckBlackList $processUuid: Process finished.  Users still blacklisted: ${userBlacklist.size}."}
         return null
     }
 
     /**
      * Periodically attempts to send any queued files to the central controller for storing on a cloud service provider.
      */
-    @Scheduled(fixedDelay = POLL_TIMEOUT)
+    @Scheduled(fixedDelayString="\${filecontroller.frequencies.filepoll}")
     fun sendFileRequests(): Future<Any>?{
         if (keepRunning){
             var filesSent = 0L
             val processUuid = UUID.randomUUID()
             runningSendProcesses.add(processUuid)
-            logger.debug{"Async process -- sendFileRequests $processUuid: Executing Send File Requests function."  }
+            logger.trace{"Async process -- sendFileRequests $processUuid: Executing Send File Requests function."  }
             val centralControllerProtocol = if (centralControllerSettings.useSSL) "https" else "http"
             //for testing use a hostname verifier that doesn't do any verification
             if ((centralControllerSettings.useSSL) && (centralControllerSettings.disableCertificateValidation)) {

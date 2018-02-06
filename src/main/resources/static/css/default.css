@@ -14,27 +14,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-/*
- * Created by irotsoma on 7/21/17.
- */
-package com.irotsoma.cloudbackenc.filecontroller.webui.controllers
-
-import org.springframework.stereotype.Controller
-import org.springframework.ui.Model
-import org.springframework.web.bind.annotation.CookieValue
-import org.springframework.web.bind.annotation.GetMapping
-
-
-/**
- *
- *
- * @author Justin Zak
- */
-@Controller
-internal class HomeController {
-    @GetMapping("/")
-    fun home(model: Model, @CookieValue(name="centralcontroller-token", required=false) token: String?): String {
-        model.addAttribute("isLoggedIn", token != null)
-        return "index"
-    }
+table{
+    width: auto
 }

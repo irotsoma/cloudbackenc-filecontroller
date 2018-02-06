@@ -52,7 +52,7 @@ class LoginController {
 
 
     @GetMapping
-    fun home(model: Model): String {
+    fun get(model: Model): String {
         return "login"
     }
     @PostMapping
@@ -82,10 +82,10 @@ class LoginController {
                     RestTemplate().exchange("${ if (centralControllerSettings.useSSL){"https"}else{"http"}}://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.authPath}", HttpMethod.GET, httpTokenEntity, AuthenticationToken::class.java)
                 } catch (e: HttpClientErrorException) {
                     return if (e.rawStatusCode == 401) {
-                        //TODO credentials error to browser
                         if (loginForm.username!=null) {
                             model.addAttribute("username", loginForm.username)
                         }
+                        model.addAttribute("formError", "Login failed.  Check your username and password.")
                         "login"
                     } else {
                         model.addAttribute("status", "")
@@ -112,9 +112,9 @@ class LoginController {
             cookie.maxAge = (((tokenResponse.body?.tokenExpiration?.time ?: (Date().time + 86400000L)) - Date().time) / 1000).toInt()
             response.addCookie(cookie)
 
-            "index"
+            "redirect:/"
         } else {
-            //TODO: credentials error to browser
+            //TODO: error to browser
             if (loginForm.username!=null) {
                 model.addAttribute("username", loginForm.username)
             }

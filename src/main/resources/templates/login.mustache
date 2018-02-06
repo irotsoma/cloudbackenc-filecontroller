@@ -15,18 +15,32 @@
   -->
 
 {{#layout}}{{#title}}Login{{/title}}
+<div class="jumbotron">
     <h1>Login</h1>
+</div>
 <div class="container form-group">
     <form id="login-form" action="/login" method="POST">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" class="form-control{{#usernameError}} is-invalid{{/usernameError}}" {{#username}}value="{{.}}"{{/username}} required />
-        {{#usernameError}}<div class="invalid-feedback">{{.}}</div>{{/usernameError}}
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" class="form-control{{#passwordError}} is-invalid{{/passwordError}}" required />
-        {{#passwordError}}<div class="invalid-feedback">{{.}}</div>{{/passwordError}}
-
-        <button id="login-submit" type="submit" class="form-button">Submit</button>
+        {{#formError}}
+            <div class="form-group alert alert-danger alert-dismissible fade show">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                {{.}}
+            </div>
+        {{/formError}}
+        <div  class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" class="form-control{{#usernameError}} is-invalid{{/usernameError}}" {{#username}}value="{{.}}"{{/username}} required />
+            {{#usernameError}}<div class="invalid-feedback">{{.}}</div>{{/usernameError}}
+        </div>
+        <div  class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" class="form-control{{#passwordError}} is-invalid{{/passwordError}}" required />
+            {{#passwordError}}<div class="invalid-feedback">{{.}}</div>{{/passwordError}}
+        </div>
+        <div  class="form-group">
+            <button id="login-submit" type="submit" class="btn btn-primary">Submit</button>
+        </div>
     </form>
-    {{#formError}}<div class="invalid-feedback">{{.}}</div>{{/formError}}
 </div>
 {{/layout}}

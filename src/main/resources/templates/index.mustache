@@ -15,6 +15,13 @@
   -->
 
 {{#layout}}{{#title}}Home Page{{/title}}
-<h1>Demo</h1>
-<div>Hello World</div>
+<div class="jumbotron"><h1>Home</h1></div>
+<div class="container">
+    {{#isLoggedIn}}
+        Select an option from the menus above.
+    {{/isLoggedIn}}
+    {{^isLoggedIn}}
+        Please <a href="login">login</a> to continue
+    {{/isLoggedIn}}
+</div>
 {{/layout}}
