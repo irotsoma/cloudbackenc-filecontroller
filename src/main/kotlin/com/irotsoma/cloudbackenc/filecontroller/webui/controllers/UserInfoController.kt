@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.CookieValue
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.ResourceAccessException
 import org.springframework.web.client.RestTemplate
 
 @Controller
@@ -52,7 +53,7 @@ class UserInfoController {
         //for testing use a hostname verifier that doesn't do any verification
         if ((centralControllerSettings.useSSL) && (centralControllerSettings.disableCertificateValidation)) {
             trustSelfSignedSSL()
-            LoginController.logger.warn { "SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
+            logger.warn { "SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
         }
         val userResponse =
             try{
@@ -63,13 +64,29 @@ class UserInfoController {
                     "redirect:/login"
                 } else {
                     model.addAttribute("status", "")
-                    var errorMessage = "Error accessing central controller."
+                    var errorMessage = "Error accessing central controller. Make sure it is running and accessible."
                     if (logger.isDebugEnabled) {
                         errorMessage += "<br><br>${e.localizedMessage}"
                     }
                     model.addAttribute("error", errorMessage)
                     "error"
                 }
+            } catch (e: ResourceAccessException) {
+                return if (e.cause?.message?.contains("Connection refused", true) == true){
+                    model.addAttribute("status", "")
+                    var errorMessage = "Error accessing central controller. Make sure it is running and accessible."
+                    if (logger.isDebugEnabled) {
+                        errorMessage += "<br><br>${e.localizedMessage}"
+                    }
+                    model.addAttribute("error", errorMessage)
+                    "error"
+                } else {
+                    model.addAttribute("error", e.localizedMessage)
+                    "error"
+                }
+            } catch (e:Exception){
+                model.addAttribute("error", e.localizedMessage)
+                return "error"
             }
         model.addAttribute("username",userResponse.body?.username ?:"")
         model.addAttribute("email",userResponse.body?.email ?:"")
