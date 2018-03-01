@@ -15,7 +15,7 @@
  */
 buildscript {
     ext.commonVersion = '0.3-SNAPSHOT'
-    ext.springBootVersion = '2.0.0.RC1'
+    ext.springBootVersion = '2.0.0.RELEASE'
     ext.kotlinVersion = '1.2.21'
     ext.dokkaVersion = '0.9.14'
     ext.liquibaseGradleVersion = '1.2.4'
@@ -74,8 +74,6 @@ signing {
 }
 repositories {
     mavenCentral()
-    //TODO: remove this once Spring boot 2.0 is released
-    maven { url 'https://repo.spring.io/libs-milestone' }
     //if the current project is a snapshot then allow using snapshot versions from maven central  Having this as an if prevents accidentally building a release version with snapshot dependencies.
     if (!isReleaseVersion){
         maven{
