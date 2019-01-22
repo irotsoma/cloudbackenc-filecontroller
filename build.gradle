@@ -15,15 +15,15 @@
  */
 buildscript {
     ext.commonVersion = '0.4-SNAPSHOT'
-    ext.springBootVersion = '2.0.4.RELEASE'
-    ext.kotlinVersion = '1.2.60'
+    ext.springBootVersion = '2.1.2.RELEASE'
+    ext.kotlinVersion = '1.3.11'
     ext.dokkaVersion = '0.9.17'
-    ext.liquibaseGradleVersion = '2.0.0'
-    ext.kotlinLoggingVersion = '1.5.9'
+    ext.liquibaseGradleVersion = '2.0.1'
+    ext.kotlinLoggingVersion = '1.6.22'
     ext.commonsIoVersion = '1.3.2'
     ext.apacheCommonsCompressionVersion = '1.18'
     ext.propdepsPluginVersion='0.0.10.RELEASE'
-    ext.bootstrapVersion = '4.1.3'
+    ext.bootstrapVersion = '4.2.1'
     ext.jqueryVersion = '3.3.1-1'
 
     repositories {
@@ -47,7 +47,7 @@ buildscript {
 
 }
 plugins {
-    id 'com.github.hierynomus.license' version '0.14.0'
+    id 'com.github.hierynomus.license' version '0.15.0'
 }
 
 
@@ -93,13 +93,27 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
     //spring
-    compile 'org.springframework.boot:spring-boot-starter-web'
-    compile 'org.springframework.boot:spring-boot-starter-actuator'
-    compile 'org.springframework.boot:spring-boot-starter-logging'
+    compile ('org.springframework.boot:spring-boot-starter-web'){
+        exclude module: "spring-boot-starter-logging"
+        exclude module: "logback-classic"
+    }
+    compile ('org.springframework.boot:spring-boot-starter-actuator'){
+        exclude module: "spring-boot-starter-logging"
+        exclude module: "logback-classic"
+    }
     compile 'org.springframework.boot:spring-boot-starter-log4j2'
-    compile 'org.springframework.boot:spring-boot-starter-data-jpa'
-    compile 'org.springframework.boot:spring-boot-starter-integration'
-    compile 'org.springframework.boot:spring-boot-starter-mustache'
+    compile ('org.springframework.boot:spring-boot-starter-data-jpa'){
+        exclude module: "spring-boot-starter-logging"
+        exclude module: "logback-classic"
+    }
+    compile ('org.springframework.boot:spring-boot-starter-integration'){
+        exclude module: "spring-boot-starter-logging"
+        exclude module: "logback-classic"
+    }
+    compile ('org.springframework.boot:spring-boot-starter-mustache'){
+        exclude module: "spring-boot-starter-logging"
+        exclude module: "logback-classic"
+    }
     optional 'org.springframework.boot:spring-boot-devtools'
     optional 'org.springframework.boot:spring-boot-configuration-processor'
     kapt 'org.springframework.boot:spring-boot-configuration-processor'
@@ -127,7 +141,10 @@ dependencies {
     compile("org.webjars:bootstrap:$bootstrapVersion")
     compile("org.webjars:jquery:$jqueryVersion")
     //test
-    testCompile 'org.springframework.boot:spring-boot-starter-test'
+    testCompile ('org.springframework.boot:spring-boot-starter-test'){
+        exclude module: "spring-boot-starter-logging"
+        exclude module: "logback-classic"
+    }
 }
 sourceSets {
     main.java.srcDirs += 'src/main/kotlin'
@@ -162,7 +179,7 @@ copyLicenseReports.mustRunAfter 'downloadLicenses'
 //javadoc stuff for Kotlin
 apply plugin: 'org.jetbrains.dokka'
 dokka {
-    outputFormat = 'javadoc'
+    outputFormat = 'html'
     outputDirectory = "$buildDir/docs/javadoc"
 }
 task javadocJar(type: Jar, dependsOn: dokka) {
