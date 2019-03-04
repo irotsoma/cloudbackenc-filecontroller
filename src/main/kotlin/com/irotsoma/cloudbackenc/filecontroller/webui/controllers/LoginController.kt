@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2018  Irotsoma, LLC
+ * Copyright (C) 2016-2019  Irotsoma, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -23,6 +23,8 @@ import com.irotsoma.cloudbackenc.filecontroller.webui.models.LoginForm
 import mu.KLogging
 import org.apache.tomcat.util.codec.binary.Base64
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.MessageSource
+import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
@@ -49,7 +51,8 @@ class LoginController {
 
     @Autowired
     lateinit var centralControllerSettings: CentralControllerSettings
-
+    @Autowired
+    private lateinit var messageSource: MessageSource
 
     @GetMapping
     fun get(model: Model): String {
@@ -57,7 +60,7 @@ class LoginController {
     }
     @PostMapping
     fun authenticate(@ModelAttribute @Valid loginForm: LoginForm, bindingResult: BindingResult, response: HttpServletResponse, model: Model): String {
-
+        val locale = LocaleContextHolder.getLocale()
         if (bindingResult.hasErrors()) {
             for (error in bindingResult.fieldErrors){
                 model.addAttribute("${error.field}Error", error.defaultMessage)
@@ -85,7 +88,7 @@ class LoginController {
                         if (loginForm.username!=null) {
                             model.addAttribute("username", loginForm.username)
                         }
-                        model.addAttribute("formError", "Login failed.  Check your username and password.")
+                        model.addAttribute("formError", messageSource.getMessage("logincontroller.message.login.failed", null, locale))
                         "login"
                     } else {
                         model.addAttribute("status", "")
@@ -114,9 +117,9 @@ class LoginController {
 
             "redirect:/"
         } else {
-            //TODO: error to browser
             if (loginForm.username!=null) {
                 model.addAttribute("username", loginForm.username)
+                model.addAttribute("formError", messageSource.getMessage("logincontroller.message.login.failed", null, locale))
             }
             "login"
         }
