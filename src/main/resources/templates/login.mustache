@@ -27,17 +27,17 @@
             </div>
         {{/formError}}
         <div  class="form-group">
-            <label for="username">Username:</label>
+            <label for="username">{{usernameLabel}}</label>
             <input type="text" id="username" name="username" class="form-control{{#usernameError}} is-invalid{{/usernameError}}" {{#username}}value="{{.}}"{{/username}} required />
             {{#usernameError}}<div class="invalid-feedback">{{.}}</div>{{/usernameError}}
         </div>
         <div  class="form-group">
-            <label for="password">Password:</label>
+            <label for="password">{{passwordLabel}}</label>
             <input type="password" id="password" name="password" class="form-control{{#passwordError}} is-invalid{{/passwordError}}" required />
             {{#passwordError}}<div class="invalid-feedback">{{.}}</div>{{/passwordError}}
         </div>
         <div  class="form-group">
-            <button id="login-submit" type="submit" class="btn btn-primary">Submit</button>
+            <button id="login-submit" type="submit" class="btn btn-primary">{{submitButtonLabel}}</button>
         </div>
     </form>
 </div>

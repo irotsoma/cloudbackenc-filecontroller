@@ -57,7 +57,7 @@ class UserInfoController {
         }
         val userResponse =
             try{
-                val testPath = "${ if (centralControllerSettings.useSSL){"https"}else{"http"}}://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.usersPath}"
+                //val testPath = "${ if (centralControllerSettings.useSSL){"https"}else{"http"}}://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.usersPath}"
                 RestTemplate().exchange("${ if (centralControllerSettings.useSSL){"https"}else{"http"}}://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.usersPath}", HttpMethod.GET, httpEntity, CloudBackEncUser::class.java)
             } catch (e: HttpClientErrorException) {
                 return if (e.rawStatusCode == 401) {

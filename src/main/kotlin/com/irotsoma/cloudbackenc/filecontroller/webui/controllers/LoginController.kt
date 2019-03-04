@@ -56,6 +56,10 @@ class LoginController {
 
     @GetMapping
     fun get(model: Model): String {
+        val locale = LocaleContextHolder.getLocale()
+        model.addAttribute("usernameLabel", messageSource.getMessage("logincontroller.label.username",null,locale))
+        model.addAttribute("passwordLabel", messageSource.getMessage("logincontroller.label.password",null,locale))
+        model.addAttribute("submitButtonLabel", messageSource.getMessage("logincontroller.button.label.submit",null,locale))
         return "login"
     }
     @PostMapping
@@ -92,7 +96,7 @@ class LoginController {
                         "login"
                     } else {
                         model.addAttribute("status", "")
-                        var errorMessage = "Error logging in to central controller."
+                        var errorMessage = "Error logging in to central controller. Make sure it is running and accessible."
                         if (logger.isDebugEnabled){
                             errorMessage += "<br><br>${e.localizedMessage}"
                         }
@@ -101,7 +105,7 @@ class LoginController {
                     }
                 } catch(e: Exception) {
                     model.addAttribute("status", "")
-                    var errorMessage = "Error logging in to central controller."
+                    var errorMessage = "Error logging in to central controller. Make sure it is running and accessible."
                     if (logger.isDebugEnabled){
                         errorMessage += "<br><br>${e.localizedMessage}"
                     }
