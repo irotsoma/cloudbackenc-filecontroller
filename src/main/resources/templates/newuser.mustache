@@ -1,0 +1,65 @@
+<!--
+  ~ Copyright (C) 2016-2019  Irotsoma, LLC
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Lesser General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU Lesser General Public License for more details.
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>
+  -->
+
+{{#layout}}{{#title}}User Details{{/title}}
+    <div class="container form-group">
+        <form id="new-user-form" action="/newuser" method="POST">
+            {{#formError}}
+                <div class="form-group alert alert-danger alert-dismissible fade show">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    {{.}}
+                </div>
+            {{/formError}}
+            <div  class="form-group">
+                <label for="username">{{usernameLabel}}</label>
+                <input type="text" id="username" name="username" class="form-control{{#usernameError}} is-invalid{{/usernameError}}" {{#username}}value="{{.}}"{{/username}} required />
+                {{#usernameError}}<div class="invalid-feedback">{{.}}</div>{{/usernameError}}
+            </div>
+            <div  class="form-group">
+                <label for="password">{{passwordLabel}}</label>
+                <input type="password" id="password" name="password" class="form-control{{#passwordError}} is-invalid{{/passwordError}}" required />
+                {{#passwordError}}<div class="invalid-feedback">{{.}}</div>{{/passwordError}}
+            </div>
+            <div  class="form-group">
+                <label for="passwordConfirm">{{passwordConfirmLabel}}</label>
+                <input type="password" id="passwordConfirm" name="passwordConfirm" class="form-control{{#passwordConfirmError}} is-invalid{{/passwordConfirmError}}" required />
+                {{#passwordConfirmError}}<div class="invalid-feedback">{{.}}</div>{{/passwordConfirmError}}
+            </div>
+            <div  class="form-group">
+                <label for="email">{{emailLabel}}</label>
+                <input type="text" id="email" name="email" class="form-control{{#emailError}} is-invalid{{/emailError}}" {{#email}}value="{{.}}"{{/email}}/>
+                {{#emailError}}<div class="invalid-feedback">{{.}}</div>{{/emailError}}
+            </div>
+            <div  class="form-group">
+                <label for="roles">{{rolesLabel}}</label>
+                <select type="text" id="roles" name="roles" class="form-control{{#rolesError}} is-invalid{{/rolesError}}" required multiple>
+                    {{#roles}}
+                        <option value="{{name}}" {{selected}}>{{name}}</option>
+                    {{/roles}}
+                </select>
+                {{#rolesError}}<div class="invalid-feedback">{{.}}</div>{{/rolesError}}
+            </div>
+            <div  class="form-group">
+                <button id="login-submit" type="submit" class="btn btn-primary">{{submitButtonLabel}}</button>
+            </div>
+        </form>
+    </div>
+
+
+
+{{/layout}}

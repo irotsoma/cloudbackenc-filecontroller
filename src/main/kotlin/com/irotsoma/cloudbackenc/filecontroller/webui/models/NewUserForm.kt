@@ -18,9 +18,13 @@ package com.irotsoma.cloudbackenc.filecontroller.webui.models
 
 import javax.validation.constraints.NotEmpty
 
-class LoginForm {
+class NewUserForm {
     @NotEmpty
     var username: String? = null
     @NotEmpty
     var password: String? = null
+    @NotEmpty
+    var passwordConfirm: String? = null
+    var email: String? = null
+    var roles: Array<Option> = emptyArray()
 }
