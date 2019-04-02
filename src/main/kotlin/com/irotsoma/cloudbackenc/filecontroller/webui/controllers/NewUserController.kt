@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import java.util.*
 import javax.servlet.http.HttpServletResponse
 import javax.validation.Valid
 
@@ -39,6 +40,7 @@ import javax.validation.Valid
 class NewUserController {
     /** kotlin-logging implementation*/
     companion object: KLogging()
+    val locale: Locale = LocaleContextHolder.getLocale()
 
     @Autowired
     lateinit var centralControllerSettings: CentralControllerSettings
@@ -46,27 +48,39 @@ class NewUserController {
     private lateinit var messageSource: MessageSource
     @GetMapping
     fun get(model: Model): String {
-        val locale = LocaleContextHolder.getLocale()
-        model.addAttribute("usernameLabel", messageSource.getMessage("newusercontroller.label.username",null,locale))
-        model.addAttribute("passwordLabel", messageSource.getMessage("newusercontroller.label.password",null,locale))
-        model.addAttribute("passwordConfirmLabel", messageSource.getMessage("newusercontroller.label.passwordconfirm",null,locale))
-        model.addAttribute("emailLabel", messageSource.getMessage("newusercontroller.label.email",null,locale))
-        model.addAttribute("userRolesLabel", messageSource.getMessage("newusercontroller.label.roles",null,locale))
-        model.addAttribute("submitButtonLabel", messageSource.getMessage("newusercontroller.button.label.submit",null,locale))
+        addStaticAttributes(model)
         model.addAttribute("roles", CloudBackEncRoles.values().map{ Option(it.value, false) })
         return "newuser"
     }
     @PostMapping
     fun createUser(@ModelAttribute @Valid newUserForm: NewUserForm, bindingResult: BindingResult, response: HttpServletResponse, model: Model): String {
-        val locale = LocaleContextHolder.getLocale()
         if (bindingResult.hasErrors()) {
             for (error in bindingResult.fieldErrors){
                 model.addAttribute("${error.field}Error", error.defaultMessage)
             }
-            //TODO: Send back previous values for fields
-            return "login"
+            //Send back previous values for fields
+            if (newUserForm.username!=null) {
+                model.addAttribute("username", newUserForm.username)
+            }
+            if (newUserForm.email!=null) {
+                model.addAttribute("email", newUserForm.email)
+            }
+            addStaticAttributes(model)
+            model.addAttribute("roles", CloudBackEncRoles.values().map{if (newUserForm.roles.contains(Option(it.value,true))) Option(it.value,true) else Option(it.value,false)})
+            return "newuser"
         }
 
+
         TODO()
+    }
+    fun addStaticAttributes(model:Model){
+        model.addAttribute("pageTitle", messageSource.getMessage("newUser.label", null, locale))
+        model.addAttribute("usernameLabel", messageSource.getMessage("username.label",null,locale))
+        model.addAttribute("passwordLabel", messageSource.getMessage("password.label",null,locale))
+        model.addAttribute("passwordConfirmLabel", messageSource.getMessage("passwordConfirm.label",null,locale))
+        model.addAttribute("emailLabel", messageSource.getMessage("email.label",null,locale))
+        model.addAttribute("userRolesLabel", messageSource.getMessage("roles.label",null,locale))
+        model.addAttribute("submitButtonLabel", messageSource.getMessage("submit.label",null,locale))
+
     }
 }

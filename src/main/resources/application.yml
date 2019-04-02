@@ -23,15 +23,15 @@ filecontroller.webui:
     jqueryVersion: 3.3.1-1
 filecontroller.webui.menus:
   menuLayout:
-    - nameProperty: filecontroller.menu.home
+    - nameProperty: home.label
       path: /
-    - nameProperty: filecontroller.menu.users
+    - nameProperty: users.label
       menuItems:
-        - nameProperty: filecontroller.menuitem.login
+        - nameProperty: logIn.label
           path: /login
-        - nameProperty: filecontroller.menuitem.userinfo
+        - nameProperty: userDetails.label
           path: /userinfo
-        - nameProperty: filecontroller.menuitem.newuser
+        - nameProperty: newUser.label
           path: /newuser
 management.endpoints.web:
   expose: "*"

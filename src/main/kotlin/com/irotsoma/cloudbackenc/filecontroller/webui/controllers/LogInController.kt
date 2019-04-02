@@ -19,7 +19,7 @@ package com.irotsoma.cloudbackenc.filecontroller.webui.controllers
 import com.irotsoma.cloudbackenc.common.AuthenticationToken
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
-import com.irotsoma.cloudbackenc.filecontroller.webui.models.LoginForm
+import com.irotsoma.cloudbackenc.filecontroller.webui.models.LogInForm
 import mu.KLogging
 import org.apache.tomcat.util.codec.binary.Base64
 import org.springframework.beans.factory.annotation.Autowired
@@ -45,9 +45,10 @@ import javax.validation.Valid
 
 @Controller
 @RequestMapping("/login")
-class LoginController {
+class LogInController {
     /** kotlin-logging implementation*/
     companion object: KLogging()
+    val locale: Locale = LocaleContextHolder.getLocale()
 
     @Autowired
     lateinit var centralControllerSettings: CentralControllerSettings
@@ -56,25 +57,22 @@ class LoginController {
 
     @GetMapping
     fun get(model: Model): String {
-        val locale = LocaleContextHolder.getLocale()
-        model.addAttribute("usernameLabel", messageSource.getMessage("logincontroller.label.username",null,locale))
-        model.addAttribute("passwordLabel", messageSource.getMessage("logincontroller.label.password",null,locale))
-        model.addAttribute("submitButtonLabel", messageSource.getMessage("logincontroller.button.label.submit",null,locale))
+        addStaticAttributes(model)
         return "login"
     }
     @PostMapping
-    fun authenticate(@ModelAttribute @Valid loginForm: LoginForm, bindingResult: BindingResult, response: HttpServletResponse, model: Model): String {
-        val locale = LocaleContextHolder.getLocale()
+    fun authenticate(@ModelAttribute @Valid logInForm: LogInForm, bindingResult: BindingResult, response: HttpServletResponse, model: Model): String {
         if (bindingResult.hasErrors()) {
             for (error in bindingResult.fieldErrors){
                 model.addAttribute("${error.field}Error", error.defaultMessage)
             }
-            if (loginForm.username!=null) {
-                model.addAttribute("username", loginForm.username)
+            if (logInForm.username!=null) {
+                model.addAttribute("username", logInForm.username)
             }
+            addStaticAttributes(model)
             return "login"
         }
-        val plainUserCredentials = "${loginForm.username}:${loginForm.password}".toByteArray()
+        val plainUserCredentials = "${logInForm.username}:${logInForm.password}".toByteArray()
         val base64UserCredentials = String(Base64.encodeBase64(plainUserCredentials))
         val tokenRequestHeaders = HttpHeaders()
         tokenRequestHeaders.add(HttpHeaders.AUTHORIZATION, "Basic $base64UserCredentials")
@@ -89,10 +87,11 @@ class LoginController {
                     RestTemplate().exchange("${ if (centralControllerSettings.useSSL){"https"}else{"http"}}://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.authPath}", HttpMethod.GET, httpTokenEntity, AuthenticationToken::class.java)
                 } catch (e: HttpClientErrorException) {
                     return if (e.rawStatusCode == 401) {
-                        if (loginForm.username!=null) {
-                            model.addAttribute("username", loginForm.username)
+                        if (logInForm.username!=null) {
+                            model.addAttribute("username", logInForm.username)
                         }
-                        model.addAttribute("formError", messageSource.getMessage("logincontroller.message.login.failed", null, locale))
+                        addStaticAttributes(model)
+                        model.addAttribute("formError", messageSource.getMessage("logIn.failed.message", null, locale))
                         "login"
                     } else {
                         model.addAttribute("status", "")
@@ -121,11 +120,19 @@ class LoginController {
 
             "redirect:/"
         } else {
-            if (loginForm.username!=null) {
-                model.addAttribute("username", loginForm.username)
-                model.addAttribute("formError", messageSource.getMessage("logincontroller.message.login.failed", null, locale))
+            if (logInForm.username!=null) {
+                model.addAttribute("username", logInForm.username)
+                model.addAttribute("formError", messageSource.getMessage("logIn.failed.message", null, locale))
             }
+            addStaticAttributes(model)
             "login"
         }
+    }
+    fun addStaticAttributes(model: Model){
+        model.addAttribute("usernameLabel", messageSource.getMessage("username.label",null,locale))
+        model.addAttribute("passwordLabel", messageSource.getMessage("password.label",null,locale))
+        model.addAttribute("submitButtonLabel", messageSource.getMessage("submit.label",null,locale))
+        model.addAttribute("pageTitle", messageSource.getMessage("logIn.label", null, locale))
+
     }
 }
