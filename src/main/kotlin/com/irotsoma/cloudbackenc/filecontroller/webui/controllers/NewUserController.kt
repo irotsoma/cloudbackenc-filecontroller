@@ -27,13 +27,13 @@ import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.validation.BindingResult
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import java.util.*
 import javax.servlet.http.HttpServletResponse
-import javax.validation.Valid
 
 @Controller
 @RequestMapping("/newuser")
@@ -53,7 +53,7 @@ class NewUserController {
         return "newuser"
     }
     @PostMapping
-    fun createUser(@ModelAttribute @Valid newUserForm: NewUserForm, bindingResult: BindingResult, response: HttpServletResponse, model: Model): String {
+    fun createUser(@ModelAttribute @Validated newUserForm: NewUserForm, bindingResult: BindingResult, response: HttpServletResponse, model: Model): String {
         if (bindingResult.hasErrors()) {
             for (error in bindingResult.fieldErrors){
                 model.addAttribute("${error.field}Error", error.defaultMessage)
@@ -64,6 +64,9 @@ class NewUserController {
             }
             if (newUserForm.email!=null) {
                 model.addAttribute("email", newUserForm.email)
+            }
+            if (newUserForm.emailConfirm!=null) {
+                model.addAttribute("emailConfirm", newUserForm.emailConfirm)
             }
             addStaticAttributes(model)
             model.addAttribute("roles", CloudBackEncRoles.values().map{if (newUserForm.roles.contains(Option(it.value,true))) Option(it.value,true) else Option(it.value,false)})
@@ -79,6 +82,7 @@ class NewUserController {
         model.addAttribute("passwordLabel", messageSource.getMessage("password.label",null,locale))
         model.addAttribute("passwordConfirmLabel", messageSource.getMessage("passwordConfirm.label",null,locale))
         model.addAttribute("emailLabel", messageSource.getMessage("email.label",null,locale))
+        model.addAttribute("emailConfirmLabel", messageSource.getMessage("emailConfirm.label",null,locale))
         model.addAttribute("userRolesLabel", messageSource.getMessage("roles.label",null,locale))
         model.addAttribute("submitButtonLabel", messageSource.getMessage("submit.label",null,locale))
 

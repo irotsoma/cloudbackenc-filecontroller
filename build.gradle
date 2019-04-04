@@ -25,6 +25,7 @@ buildscript {
     ext.propdepsPluginVersion='0.0.10.RELEASE'
     ext.bootstrapVersion = '4.2.1'
     ext.jqueryVersion = '3.3.1-1'
+    ext.webValidationVersion = '0.1-SNAPSHOT'
 
     repositories {
         mavenCentral()
@@ -140,6 +141,8 @@ dependencies {
     //javascript
     compile("org.webjars:bootstrap:$bootstrapVersion")
     compile("org.webjars:jquery:$jqueryVersion")
+    compile("com.irotsoma.web:validation:$webValidationVersion")
+    
     //test
     testCompile ('org.springframework.boot:spring-boot-starter-test'){
         exclude module: "spring-boot-starter-logging"

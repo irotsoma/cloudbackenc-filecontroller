@@ -46,6 +46,11 @@
                 {{#emailError}}<div class="invalid-feedback">{{.}}</div>{{/emailError}}
             </div>
             <div  class="form-group">
+                <label for="emailConfirm">{{emailConfirmLabel}}</label>
+                <input type="text" id="emailConfirm" name="email" class="form-control{{#emailConfirmError}} is-invalid{{/emailConfirmError}}" {{#emailConfirm}}value="{{.}}"{{/emailConfirm}}/>
+                {{#emailConfirmError}}<div class="invalid-feedback">{{.}}</div>{{/emailConfirmError}}
+            </div>
+            <div  class="form-group">
                 <label for="roles">{{userRolesLabel}}</label>
                 <select type="text" id="roles" name="roles" class="form-control{{#rolesError}} is-invalid{{/rolesError}}" required multiple>
                     {{#roles}}

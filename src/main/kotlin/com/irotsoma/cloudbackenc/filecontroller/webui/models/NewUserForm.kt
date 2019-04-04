@@ -16,15 +16,27 @@
 
 package com.irotsoma.cloudbackenc.filecontroller.webui.models
 
+import com.irotsoma.web.validation.FieldMatch
+import com.irotsoma.web.validation.ValidPassword
+import javax.validation.constraints.Email
 import javax.validation.constraints.NotEmpty
 
+@FieldMatch.List([
+    FieldMatch(first = "password", second = "confirmPassword", message = "The password fields must match"),
+    FieldMatch(first = "email", second = "confirmEmail", message = "The email fields must match")
+])
 class NewUserForm {
     @NotEmpty
     var username: String? = null
     @NotEmpty
+    @ValidPassword
     var password: String? = null
     @NotEmpty
+    @ValidPassword
     var passwordConfirm: String? = null
+    @Email
     var email: String? = null
+    @Email
+    var emailConfirm: String? = null
     var roles: Array<Option> = emptyArray()
 }
