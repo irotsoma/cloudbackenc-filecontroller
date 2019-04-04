@@ -19,10 +19,14 @@
  */
 package com.irotsoma.cloudbackenc.filecontroller.webui.controllers
 
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.MessageSource
+import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.CookieValue
 import org.springframework.web.bind.annotation.GetMapping
+import java.util.*
 
 
 /**
@@ -32,8 +36,12 @@ import org.springframework.web.bind.annotation.GetMapping
  */
 @Controller
 internal class HomeController {
+    val locale: Locale = LocaleContextHolder.getLocale()
+    @Autowired
+    private lateinit var messageSource: MessageSource
     @GetMapping("/")
     fun home(model: Model, @CookieValue(name="centralcontroller-token", required=false) token: String?): String {
+        model.addAttribute("pageTitle", messageSource.getMessage("home.label", null, locale))
         model.addAttribute("isLoggedIn", token != null)
         return "index"
     }

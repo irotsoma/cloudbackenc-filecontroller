@@ -95,7 +95,7 @@ class LogInController {
                         "login"
                     } else {
                         model.addAttribute("status", "")
-                        var errorMessage = "Error logging in to central controller. Make sure it is running and accessible."
+                        var errorMessage = messageSource.getMessage("centralcontroller.error.message", null, locale)
                         if (logger.isDebugEnabled){
                             errorMessage += "<br><br>${e.localizedMessage}"
                         }
@@ -104,7 +104,7 @@ class LogInController {
                     }
                 } catch(e: Exception) {
                     model.addAttribute("status", "")
-                    var errorMessage = "Error logging in to central controller. Make sure it is running and accessible."
+                    var errorMessage = messageSource.getMessage("centralcontroller.error.message", null, locale)
                     if (logger.isDebugEnabled){
                         errorMessage += "<br><br>${e.localizedMessage}"
                     }
