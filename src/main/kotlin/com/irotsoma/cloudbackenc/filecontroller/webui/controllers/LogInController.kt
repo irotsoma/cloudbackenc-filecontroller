@@ -24,6 +24,7 @@ import mu.KLogging
 import org.apache.tomcat.util.codec.binary.Base64
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource
+import org.springframework.context.annotation.Lazy
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -43,6 +44,7 @@ import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletResponse
 import javax.validation.Valid
 
+@Lazy
 @Controller
 @RequestMapping("/login")
 class LogInController {

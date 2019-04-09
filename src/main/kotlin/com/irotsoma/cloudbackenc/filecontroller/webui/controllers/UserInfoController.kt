@@ -21,6 +21,7 @@ import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Lazy
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
@@ -34,6 +35,7 @@ import org.springframework.web.client.ResourceAccessException
 import org.springframework.web.client.RestTemplate
 
 @Controller
+@Lazy
 @RequestMapping("/userinfo")
 class UserInfoController {
     /** kotlin-logging implementation*/

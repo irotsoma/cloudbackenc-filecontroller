@@ -29,6 +29,7 @@ import mu.KLogging
 import org.apache.tomcat.util.codec.binary.Base64
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource
+import org.springframework.context.annotation.Lazy
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -47,6 +48,7 @@ import java.util.*
 import javax.validation.Valid
 
 @Controller
+@Lazy
 @RequestMapping("/newuser")
 class NewUserController {
     /** kotlin-logging implementation*/
