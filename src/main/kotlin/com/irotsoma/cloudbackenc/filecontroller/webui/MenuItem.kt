@@ -20,9 +20,12 @@ class MenuItem(){
     var nameProperty: String =""
     var name: String = ""
     var path: String = ""
-    constructor(nameProperty:String, name:String, path:String):this(){
+    var validUserRoles: ArrayList<String> = ArrayList()
+    var disabled = true
+    constructor(nameProperty:String, name:String, path:String, validUserRoles: ArrayList<String>):this(){
         this.nameProperty=nameProperty
         this.name=name
         this.path=path
+        this.validUserRoles=validUserRoles
     }
 }

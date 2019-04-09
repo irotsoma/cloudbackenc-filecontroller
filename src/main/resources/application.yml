@@ -25,13 +25,37 @@ filecontroller.webui.menus:
   menuLayout:
     - nameProperty: home.label
       path: /
+      validUserRoles:
     - nameProperty: users.label
+      validUserRoles:
       menuItems:
         - nameProperty: logIn.label
           path: /login
+          validUserRoles:
         - nameProperty: userDetails.label
           path: /userinfo
+          validUserRoles:
+            - ROLE_USER
+            - ROLE_ADMINISTRATOR
         - nameProperty: newUser.label
           path: /newuser
+          validUserRoles:
+            - ROLE_ADMINISTRATOR
+    - nameProperty: cloudServices.label
+      validUserRoles:
+        - ROLE_USER
+        - ROLE_ADMINISTRATOR
+      menuItems:
+        - nameProperty: list.label
+          path: /cloudserviceslist
+          validUserRoles:
+            - ROLE_USER
+            - ROLE_ADMINISTRATOR
+        - nameProperty: logIn.label
+          path: /cloudserviceslogin
+          validUserRoles:
+            - ROLE_USER
+            - ROLE_ADMINISTRATOR
+
 management.endpoints.web:
   expose: "*"

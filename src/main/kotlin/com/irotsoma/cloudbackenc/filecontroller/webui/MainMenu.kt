@@ -44,14 +44,16 @@ class MainMenu {
 
     val menus = ArrayList<Menu>()
 
+    //TODO: calculate if item should be disabled and modify the template as well
+
     @PostConstruct
     private fun populateValues(){
         val locale = LocaleContextHolder.getLocale()
         //translate properties into a localized names
-        for (menu in menuLayout){
+        for (menuObject in menuLayout){
             val menuItemsHolder = ArrayList<MenuItem>()
-            menu.menuItems.mapTo(menuItemsHolder) { MenuItem(it.nameProperty, messageSource.getMessage(it.nameProperty, null, locale), it.path) }
-            menus.add(Menu(menu.nameProperty, messageSource.getMessage(menu.nameProperty, null, locale), menu.path, menuItemsHolder))
+            menuObject.menuItems.mapTo(menuItemsHolder) { MenuItem(it.nameProperty, messageSource.getMessage(it.nameProperty, null, locale), it.path, it.validUserRoles) }
+            menus.add(Menu(menuObject.nameProperty, messageSource.getMessage(menuObject.nameProperty, null, locale), menuObject.path, menuObject.validUserRoles, menuItemsHolder))
         }
     }
 }

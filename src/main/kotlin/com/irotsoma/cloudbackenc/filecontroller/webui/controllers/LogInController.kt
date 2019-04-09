@@ -120,6 +120,8 @@ class LogInController {
             cookie.maxAge = (((tokenResponse.body?.tokenExpiration?.time ?: (Date().time + 86400000L)) - Date().time) / 1000).toInt()
             response.addCookie(cookie)
 
+            //TODO: store token in db
+
             "redirect:/"
         } else {
             if (logInForm.username!=null) {
