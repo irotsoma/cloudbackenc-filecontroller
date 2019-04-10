@@ -67,12 +67,11 @@ apply plugin: 'propdeps'
 apply plugin: 'org.liquibase.gradle'
 def isReleaseVersion = !version.endsWith("SNAPSHOT")
 
-//if (isReleaseVersion){
-//    excludeDevtools = true
-//}
 signing {
-    required { isReleaseVersion && gradle.taskGraph.hasTask("uploadArchives") }
     sign configurations.archives
+}
+tasks.withType(Sign) {
+    onlyIf { isReleaseVersion }
 }
 repositories {
     mavenCentral()
@@ -200,7 +199,7 @@ task sourceJar(type: Jar) {
 }
 
 artifacts {
-    archives jar
+    //archives jar
     archives sourceJar
     archives javadocJar
 }
