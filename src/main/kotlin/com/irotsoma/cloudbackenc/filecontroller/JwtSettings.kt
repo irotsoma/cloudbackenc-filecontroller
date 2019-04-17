@@ -24,7 +24,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Lazy
 /**
- *
  * Configuration object for encryption extensions.
  * Loads application.properties settings that start with "jwt".
  *

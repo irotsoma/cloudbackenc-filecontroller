@@ -53,12 +53,12 @@ import javax.validation.Valid
 class NewUserController {
     /** kotlin-logging implementation*/
     companion object: KLogging()
-    val locale: Locale = LocaleContextHolder.getLocale()
+    private val locale: Locale = LocaleContextHolder.getLocale()
 
     @Autowired
-    lateinit var centralControllerSettings: CentralControllerSettings
+    private lateinit var centralControllerSettings: CentralControllerSettings
     @Autowired
-    lateinit var centralControllerUserRepository: CentralControllerUserRepository
+    private lateinit var centralControllerUserRepository: CentralControllerUserRepository
     @Autowired
     private lateinit var messageSource: MessageSource
     @GetMapping
@@ -67,7 +67,9 @@ class NewUserController {
             return "login"
         }
         addStaticAttributes(model)
-        model.addAttribute("roles", CloudBackEncRoles.values().map{ if (it!= CloudBackEncRoles.ROLE_TEST) Option(it.value, false) })
+        val roles = ArrayList<Option>()
+        CloudBackEncRoles.values().forEach{ if (it != CloudBackEncRoles.ROLE_TEST) {roles.add(Option(it.value, false))} }
+        model.addAttribute("roles", roles)
         return "newuser"
     }
     @PostMapping
@@ -90,7 +92,9 @@ class NewUserController {
                 model.addAttribute("emailConfirm", newUserForm.emailConfirm)
             }
             addStaticAttributes(model)
-            model.addAttribute("roles", CloudBackEncRoles.values().map{if (newUserForm.roles.contains(Option(it.value,true))) Option(it.value,true) else Option(it.value,false)})
+            val roles = ArrayList<Option>()
+            CloudBackEncRoles.values().forEach{ if (it != CloudBackEncRoles.ROLE_TEST && newUserForm.roles.contains(Option(it.value,true))) {roles.add(Option(it.value, true))} else {roles.add(Option(it.value,false)) }}
+            model.addAttribute("roles", roles)
             return "newuser"
         }
         //for testing use a hostname verifier that doesn't do any verification
@@ -127,7 +131,9 @@ class NewUserController {
                             model.addAttribute("emailConfirm", newUserForm.emailConfirm)
                         }
                         addStaticAttributes(model)
-                        model.addAttribute("roles", CloudBackEncRoles.values().map{ if (it!= CloudBackEncRoles.ROLE_TEST){ if (newUserForm.roles.contains(Option(it.value,true))) Option(it.value,true) else Option(it.value,false) } })
+                        val roles = ArrayList<Option>()
+                        CloudBackEncRoles.values().forEach{ if (it != CloudBackEncRoles.ROLE_TEST && newUserForm.roles.contains(Option(it.value,true))) {roles.add(Option(it.value, true))} else {roles.add(Option(it.value,false)) }}
+                        model.addAttribute("roles", roles)
                         "newuser"
                     } else {
                         model.addAttribute("status", "")

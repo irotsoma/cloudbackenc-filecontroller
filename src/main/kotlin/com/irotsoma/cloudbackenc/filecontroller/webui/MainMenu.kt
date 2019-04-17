@@ -23,9 +23,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import java.util.*
-import javax.annotation.PostConstruct
 
 
 /**
@@ -41,19 +41,28 @@ class MainMenu {
     private lateinit var messageSource: MessageSource
 
     val menuLayout = ArrayList<Menu>()
-
-    val menus = ArrayList<Menu>()
+    private var _menus = ArrayList<Menu>()
+    val menus: ArrayList<Menu>
+        get() {
+            populateValues()
+            return _menus
+        }
 
     //TODO: calculate if item should be disabled and modify the template as well
 
-    @PostConstruct
+    /**
+     * Refreshes menu every time it is called to allow for dynamically enabling/disabling menu items based on role
+     */
     private fun populateValues(){
         val locale = LocaleContextHolder.getLocale()
+        val authentication = SecurityContextHolder.getContext().authentication
+
         //translate properties into a localized names
+        _menus.clear()
         for (menuObject in menuLayout){
             val menuItemsHolder = ArrayList<MenuItem>()
             menuObject.menuItems.mapTo(menuItemsHolder) { MenuItem(it.nameProperty, messageSource.getMessage(it.nameProperty, null, locale), it.path, it.validUserRoles) }
-            menus.add(Menu(menuObject.nameProperty, messageSource.getMessage(menuObject.nameProperty, null, locale), menuObject.path, menuObject.validUserRoles, menuItemsHolder))
+            _menus.add(Menu(menuObject.nameProperty, messageSource.getMessage(menuObject.nameProperty, null, locale), menuObject.path, menuObject.validUserRoles, menuItemsHolder))
         }
     }
 }
