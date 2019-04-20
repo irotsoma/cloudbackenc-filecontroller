@@ -41,6 +41,11 @@ filecontroller.webui.menus:
         - nameProperty: logIn.label
           path: /login
           validUserRoles:
+        - nameProperty: logOut.label
+          path: /logout
+          validUserRoles:
+            - ROLE_USER
+            - ROLE_ADMIN
         - nameProperty: userDetails.label
           path: /userinfo
           validUserRoles:

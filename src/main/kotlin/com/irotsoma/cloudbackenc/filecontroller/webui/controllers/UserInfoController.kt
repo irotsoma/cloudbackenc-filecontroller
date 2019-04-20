@@ -45,7 +45,7 @@ class UserInfoController {
     lateinit var centralControllerSettings: CentralControllerSettings
 
     @GetMapping
-    fun get(model: Model,@CookieValue(name="\${jwt.tokenCookie}", required=false) token: String?): String {
+    fun get(model: Model,@CookieValue(name="\${filecontroller.webui.tokenCookieName}", required=false) token: String?): String {
         if (token == null){
             return "redirect:/login"
         }

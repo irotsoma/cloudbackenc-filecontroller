@@ -18,7 +18,6 @@ package com.irotsoma.cloudbackenc.filecontroller.webui.controllers
 
 import com.irotsoma.cloudbackenc.common.AuthenticationToken
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
-import com.irotsoma.cloudbackenc.filecontroller.JwtSettings
 import com.irotsoma.cloudbackenc.filecontroller.data.CentralControllerUser
 import com.irotsoma.cloudbackenc.filecontroller.data.CentralControllerUserRepository
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
@@ -26,6 +25,7 @@ import com.irotsoma.cloudbackenc.filecontroller.webui.models.LogInForm
 import mu.KLogging
 import org.apache.tomcat.util.codec.binary.Base64
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.MessageSource
 import org.springframework.context.annotation.Lazy
 import org.springframework.context.i18n.LocaleContextHolder
@@ -45,6 +45,7 @@ import org.springframework.web.client.RestTemplate
 import java.util.*
 import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletResponse
+import javax.servlet.http.HttpSession
 import javax.validation.Valid
 
 @Lazy
@@ -61,8 +62,9 @@ class LogInController {
     private lateinit var messageSource: MessageSource
     @Autowired
     private lateinit var centralControllerUserRepository: CentralControllerUserRepository
-    @Autowired
-    private lateinit var jwtSettings: JwtSettings
+    @Value("\${filecontroller.webui.tokenCookieName}")
+    private lateinit var tokenCookieName: String
+
 
     @GetMapping
     fun get(model: Model): String {
@@ -70,7 +72,7 @@ class LogInController {
         return "login"
     }
     @PostMapping
-    fun authenticate(@ModelAttribute @Valid logInForm: LogInForm, bindingResult: BindingResult, response: HttpServletResponse, model: Model): String {
+    fun authenticate(@ModelAttribute @Valid logInForm: LogInForm, bindingResult: BindingResult, response: HttpServletResponse, model: Model, session: HttpSession): String {
         if (bindingResult.hasErrors()) {
             for (error in bindingResult.fieldErrors){
                 model.addAttribute("${error.field}Error", error.defaultMessage)
@@ -92,37 +94,36 @@ class LogInController {
             logger.warn { "SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
         }
         val tokenResponse =
-                try{
-                    RestTemplate().exchange("${ if (centralControllerSettings.useSSL){"https"}else{"http"}}://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.authPath}", HttpMethod.GET, httpTokenEntity, AuthenticationToken::class.java)
-                } catch (e: HttpClientErrorException) {
-                    return if (e.rawStatusCode == 401) {
-                        if (logInForm.username!=null) {
-                            model.addAttribute("username", logInForm.username)
-                        }
-                        addStaticAttributes(model)
-                        model.addAttribute("formError", messageSource.getMessage("logIn.failed.message", null, locale))
-                        "login"
-                    } else {
-                        model.addAttribute("status", "")
-                        var errorMessage = messageSource.getMessage("centralcontroller.error.message", null, locale)
-                        if (logger.isDebugEnabled){
-                            errorMessage += "<br><br>${e.localizedMessage}"
-                        }
-                        model.addAttribute("error", errorMessage)
-                        "error"
+            try{
+                RestTemplate().exchange("${ if (centralControllerSettings.useSSL){"https"}else{"http"}}://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.authPath}", HttpMethod.GET, httpTokenEntity, AuthenticationToken::class.java)
+            } catch (e: HttpClientErrorException) {
+                return if (e.rawStatusCode == 401) {
+                    if (logInForm.username!=null) {
+                        model.addAttribute("username", logInForm.username)
                     }
-                } catch(e: Exception) {
+                    addStaticAttributes(model)
+                    model.addAttribute("formError", messageSource.getMessage("logIn.failed.message", null, locale))
+                    "login"
+                } else {
                     model.addAttribute("status", "")
                     var errorMessage = messageSource.getMessage("centralcontroller.error.message", null, locale)
                     if (logger.isDebugEnabled){
                         errorMessage += "<br><br>${e.localizedMessage}"
                     }
                     model.addAttribute("error", errorMessage)
-                    return "error"
+                    "error"
                 }
+            } catch(e: Exception) {
+                model.addAttribute("status", "")
+                var errorMessage = messageSource.getMessage("centralcontroller.error.message", null, locale)
+                if (logger.isDebugEnabled){
+                    errorMessage += "<br><br>${e.localizedMessage}"
+                }
+                model.addAttribute("error", errorMessage)
+                return "error"
+            }
         return if (tokenResponse.statusCode == HttpStatus.OK) {
-
-            val cookie = Cookie(jwtSettings.tokenCookie, tokenResponse.body?.token)
+            val cookie = Cookie(tokenCookieName, tokenResponse.body?.token)
             // set the cookie age to equal the token expiration or default to 24 hrs if no expiration time was returned
             cookie.maxAge = (((tokenResponse.body?.tokenExpiration?.time ?: (Date().time + 86400000L)) - Date().time) / 1000).toInt()
             response.addCookie(cookie)

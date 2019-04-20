@@ -22,6 +22,7 @@ package com.irotsoma.cloudbackenc.filecontroller.webui
 import com.irotsoma.cloudbackenc.filecontroller.JwtSettings
 import io.jsonwebtoken.Jwts
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken
@@ -46,6 +47,8 @@ import javax.servlet.http.HttpServletRequest
 class TokenCookieFilter: GenericFilterBean() {
     @Autowired
     private lateinit var jwtSettings: JwtSettings
+    @Value("\${filecontroller.webui.tokenCookieName}")
+    private lateinit var tokenCookieName: String
 
     /**
      * Implements the authentication filter.
@@ -68,7 +71,7 @@ class TokenCookieFilter: GenericFilterBean() {
             } catch (e: Exception) {
                 throw Exception("Unable to load JWT keystore.", e)
             }
-            val token = cookies.find { it.name == jwtSettings.tokenCookie }?.value
+            val token = cookies.find { it.name == tokenCookieName }?.value
             val cert = keyStore.getCertificate(jwtSettings.keyAlias)
             val claims = Jwts.parser()
                     .setSigningKey(cert.publicKey)

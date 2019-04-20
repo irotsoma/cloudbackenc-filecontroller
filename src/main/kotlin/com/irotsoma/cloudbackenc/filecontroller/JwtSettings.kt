@@ -46,5 +46,4 @@ class JwtSettings {
     lateinit var keyAlias: String
     var keyPassword: String? = null
     lateinit var algorithm: String
-    var tokenCookie = "centralcontroller-token"
 }

@@ -15,36 +15,29 @@
  */
 
 /*
- * Created by irotsoma on 7/21/17.
+ * Created by irotsoma on 4/19/2019.
  */
 package com.irotsoma.cloudbackenc.filecontroller.webui.controllers
 
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.MessageSource
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Lazy
-import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.stereotype.Controller
-import org.springframework.ui.Model
-import org.springframework.web.bind.annotation.CookieValue
 import org.springframework.web.bind.annotation.GetMapping
-import java.util.*
+import org.springframework.web.bind.annotation.RequestMapping
+import javax.servlet.http.Cookie
+import javax.servlet.http.HttpServletResponse
 
-
-/**
- *
- *
- * @author Justin Zak
- */
-@Controller
 @Lazy
-internal class HomeController {
-    val locale: Locale = LocaleContextHolder.getLocale()
-    @Autowired
-    private lateinit var messageSource: MessageSource
-    @GetMapping("/")
-    fun home(model: Model, @CookieValue(name="\${filecontroller.webui.tokenCookieName}", required=false) token: String?): String {
-        model.addAttribute("pageTitle", messageSource.getMessage("home.label", null, locale))
-        model.addAttribute("isLoggedIn", token != null)
-        return "index"
+@Controller
+@RequestMapping("/logout")
+class LogoutController {
+    @Value("\${filecontroller.webui.tokenCookieName}")
+    private lateinit var tokenCookieName: String
+    @GetMapping
+    fun get(response: HttpServletResponse): String {
+        val cookie = Cookie(tokenCookieName, null)
+        cookie.maxAge = 0
+        response.addCookie(cookie)
+        return "redirect:/login"
     }
 }
