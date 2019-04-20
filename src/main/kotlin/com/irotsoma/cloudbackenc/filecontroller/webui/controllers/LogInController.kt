@@ -18,6 +18,7 @@ package com.irotsoma.cloudbackenc.filecontroller.webui.controllers
 
 import com.irotsoma.cloudbackenc.common.AuthenticationToken
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
+import com.irotsoma.cloudbackenc.filecontroller.CentralControllerTokenParser
 import com.irotsoma.cloudbackenc.filecontroller.data.CentralControllerUser
 import com.irotsoma.cloudbackenc.filecontroller.data.CentralControllerUserRepository
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
@@ -64,11 +65,12 @@ class LogInController {
     private lateinit var centralControllerUserRepository: CentralControllerUserRepository
     @Value("\${filecontroller.webui.tokenCookieName}")
     private lateinit var tokenCookieName: String
-
-
+    @Autowired
+    private lateinit var centralControllerTokenParser: CentralControllerTokenParser
     @GetMapping
     fun get(model: Model): String {
         addStaticAttributes(model)
+        model.addAttribute("rememberMeChecked", false)
         return "login"
     }
     @PostMapping
@@ -80,6 +82,7 @@ class LogInController {
             if (logInForm.username!=null) {
                 model.addAttribute("username", logInForm.username)
             }
+            model.addAttribute("rememberMeIsChecked", logInForm.rememberme == "rememberme")
             addStaticAttributes(model)
             return "login"
         }
@@ -101,6 +104,7 @@ class LogInController {
                     if (logInForm.username!=null) {
                         model.addAttribute("username", logInForm.username)
                     }
+                    model.addAttribute("rememberMeIsChecked", logInForm.rememberme == "rememberme")
                     addStaticAttributes(model)
                     model.addAttribute("formError", messageSource.getMessage("logIn.failed.message", null, locale))
                     "login"
@@ -123,10 +127,6 @@ class LogInController {
                 return "error"
             }
         return if (tokenResponse.statusCode == HttpStatus.OK) {
-            val cookie = Cookie(tokenCookieName, tokenResponse.body?.token)
-            // set the cookie age to equal the token expiration or default to 24 hrs if no expiration time was returned
-            cookie.maxAge = (((tokenResponse.body?.tokenExpiration?.time ?: (Date().time + 86400000L)) - Date().time) / 1000).toInt()
-            response.addCookie(cookie)
             val token = tokenResponse.body!!.token
             val userAccount = centralControllerUserRepository.findByUsername(logInForm.username!!)
             if (userAccount == null){
@@ -135,13 +135,29 @@ class LogInController {
                 userAccount.token = token
                 userAccount.tokenExpiration = tokenResponse.body!!.tokenExpiration
             }
-
+            //if remember me is set then set a cookie with the token otherwise clear any existing token cookie and use the session instead
+            if (logInForm.rememberme == "rememberme") {
+                val cookie = Cookie(tokenCookieName, token)
+                // set the cookie age to equal the token expiration or default to 24 hrs if no expiration time was returned
+                cookie.maxAge = (((tokenResponse.body?.tokenExpiration?.time
+                        ?: (Date().time + 86400000L)) - Date().time) / 1000).toInt()
+                response.addCookie(cookie)
+            } else {
+                val cookie = Cookie(tokenCookieName, null)
+                cookie.maxAge = 0
+                response.addCookie(cookie)
+            }
+            //add session attributes used by the custom AuthenticationFilter
+            session.setAttribute("SESSION_AUTHENTICATION", centralControllerTokenParser.getAuthentication(token))
+            session.setAttribute("SESSION_TOKEN", token)
             "redirect:/"
         } else {
             if (logInForm.username!=null) {
                 model.addAttribute("username", logInForm.username)
-                model.addAttribute("formError", messageSource.getMessage("logIn.failed.message", null, locale))
             }
+            model.addAttribute("rememberMeIsChecked", logInForm.rememberme == "rememberme")
+
+            model.addAttribute("formError", messageSource.getMessage("logIn.failed.message", null, locale))
             addStaticAttributes(model)
             "login"
         }
@@ -151,6 +167,7 @@ class LogInController {
         model.addAttribute("passwordLabel", messageSource.getMessage("password.label",null,locale))
         model.addAttribute("submitButtonLabel", messageSource.getMessage("submit.label",null,locale))
         model.addAttribute("pageTitle", messageSource.getMessage("logIn.label", null, locale))
-
+        model.addAttribute("rememberMeLabel",messageSource.getMessage("rememberMe.label",null, locale))
+        model.addAttribute("rememberMeWarningMessage",messageSource.getMessage("newUserController.rememberMe.warning.message",null, locale))
     }
 }

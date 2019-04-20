@@ -22,7 +22,8 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
-import org.springframework.security.web.authentication.AnonymousAuthenticationFilter
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter
+
 
 /**
  * Security configuration for MVC controllers.
@@ -42,7 +43,6 @@ class WebSecurityConfiguration : WebSecurityConfigurerAdapter(true) {
      */
     override fun configure(http: HttpSecurity){
         http
-            .addFilter(AnonymousAuthenticationFilter("ANONYMOUS"))
-            .addFilterAfter(TokenCookieFilter(), AnonymousAuthenticationFilter::class.java)
+            .addFilterBefore(CustomAuthenticationFilter(), BasicAuthenticationFilter::class.java)
     }
 }

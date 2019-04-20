@@ -38,13 +38,13 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.validation.BindingResult
-import org.springframework.web.bind.annotation.CookieValue
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestTemplate
 import java.util.*
+import javax.servlet.http.HttpSession
 import javax.validation.Valid
 
 @Controller
@@ -62,10 +62,8 @@ class NewUserController {
     @Autowired
     private lateinit var messageSource: MessageSource
     @GetMapping
-    fun get(@CookieValue("\${filecontroller.webui.tokenCookieName}", defaultValue = "") tokenCookie: String, model: Model): String {
-        if (tokenCookie == "") {
-            return "login"
-        }
+    fun get(model: Model, session: HttpSession): String {
+        val token = session.getAttribute("SESSION_TOKEN") ?: return "redirect:/login"
         addStaticAttributes(model)
         val roles = ArrayList<Option>()
         CloudBackEncRoles.values().forEach{ if (it != CloudBackEncRoles.ROLE_TEST) {roles.add(Option(it.value, false))} }
@@ -73,10 +71,8 @@ class NewUserController {
         return "newuser"
     }
     @PostMapping
-    fun createUser(@CookieValue("\${filecontroller.webui.tokenCookieName}", required = false) tokenCookie: String?, @Valid newUserForm: NewUserForm, bindingResult: BindingResult, model: Model): String {
-        if (tokenCookie == null) {
-            return "login"
-        }
+    fun createUser( @Valid newUserForm: NewUserForm, bindingResult: BindingResult, model: Model, session: HttpSession): String {
+        val token = session.getAttribute("SESSION_TOKEN") ?: return "redirect:/login"
         if (bindingResult.hasErrors()) {
             for (error in bindingResult.fieldErrors){
                 model.addAttribute("${error.field}Error", error.defaultMessage)
@@ -108,7 +104,7 @@ class NewUserController {
 
         //call post to central controller users
         val requestHeaders = HttpHeaders()
-        requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer $tokenCookie")
+        requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer $token")
         val httpEntity = HttpEntity(CloudBackEncUser(newUsername, newUserForm.password!!, newUserForm.email,true, newUserForm.roles.map{ CloudBackEncRoles.valueOf(it.name) }), requestHeaders)
         val callResponse =
             try {

@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletResponse
+import javax.servlet.http.HttpSession
 
 @Lazy
 @Controller
@@ -34,10 +35,11 @@ class LogoutController {
     @Value("\${filecontroller.webui.tokenCookieName}")
     private lateinit var tokenCookieName: String
     @GetMapping
-    fun get(response: HttpServletResponse): String {
+    fun get(response: HttpServletResponse, session:HttpSession): String {
         val cookie = Cookie(tokenCookieName, null)
         cookie.maxAge = 0
         response.addCookie(cookie)
+        session.invalidate()
         return "redirect:/login"
     }
 }

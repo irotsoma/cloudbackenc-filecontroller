@@ -32,7 +32,6 @@ class NewUserForm {
     @ValidPassword
     var password: String? = null
     @NotEmpty
-    @ValidPassword
     var passwordConfirm: String? = null
     @Email
     var email: String? = null

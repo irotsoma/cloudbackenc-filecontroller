@@ -27,12 +27,12 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
-import org.springframework.web.bind.annotation.CookieValue
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.ResourceAccessException
 import org.springframework.web.client.RestTemplate
+import javax.servlet.http.HttpSession
 
 @Controller
 @Lazy
@@ -45,10 +45,8 @@ class UserInfoController {
     lateinit var centralControllerSettings: CentralControllerSettings
 
     @GetMapping
-    fun get(model: Model,@CookieValue(name="\${filecontroller.webui.tokenCookieName}", required=false) token: String?): String {
-        if (token == null){
-            return "redirect:/login"
-        }
+    fun get(model: Model,session: HttpSession): String {
+        val token = session.getAttribute("SESSION_TOKEN") ?: return "redirect:/login"
         val requestHeaders = HttpHeaders()
         requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer $token")
         val httpEntity = HttpEntity<Any>(requestHeaders)

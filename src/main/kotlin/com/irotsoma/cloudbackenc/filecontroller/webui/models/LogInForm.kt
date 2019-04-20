@@ -23,4 +23,5 @@ class LogInForm {
     var username: String? = null
     @NotEmpty
     var password: String? = null
+    var rememberme: String? = null
 }
