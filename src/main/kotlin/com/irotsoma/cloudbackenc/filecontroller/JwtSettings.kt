@@ -22,7 +22,6 @@ package com.irotsoma.cloudbackenc.filecontroller
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Lazy
 /**
  * Configuration object for encryption extensions.
  * Loads application.properties settings that start with "jwt".
@@ -33,10 +32,10 @@ import org.springframework.context.annotation.Lazy
  * @property keyAlias The alias for the private key for creating JWT tokens
  * @property keyPassword Password for the key as defined by keyAlias
  * @property algorithm The algorithm to use for creating JWT tokens
+ * @property tokenCookie The name of the cookie to use for storing tokens on the browser.
  *
  * @author Justin Zak
  */
-@Lazy
 @Configuration
 @EnableConfigurationProperties
 @ConfigurationProperties("jwt")
@@ -47,4 +46,5 @@ class JwtSettings {
     lateinit var keyAlias: String
     var keyPassword: String? = null
     lateinit var algorithm: String
+    var tokenCookie = "centralcontroller-token"
 }

@@ -62,7 +62,7 @@ class NewUserController {
     @Autowired
     private lateinit var messageSource: MessageSource
     @GetMapping
-    fun get(@CookieValue("centralcontroller-token", defaultValue = "") tokenCookie: String, model: Model): String {
+    fun get(@CookieValue("\${jwt.tokenCookie}", defaultValue = "") tokenCookie: String, model: Model): String {
         if (tokenCookie == "") {
             return "login"
         }
@@ -73,7 +73,7 @@ class NewUserController {
         return "newuser"
     }
     @PostMapping
-    fun createUser(@CookieValue("centralcontroller-token", required = false) tokenCookie: String?, @Valid newUserForm: NewUserForm, bindingResult: BindingResult, model: Model): String {
+    fun createUser(@CookieValue("\${jwt.tokenCookie}", required = false) tokenCookie: String?, @Valid newUserForm: NewUserForm, bindingResult: BindingResult, model: Model): String {
         if (tokenCookie == null) {
             return "login"
         }

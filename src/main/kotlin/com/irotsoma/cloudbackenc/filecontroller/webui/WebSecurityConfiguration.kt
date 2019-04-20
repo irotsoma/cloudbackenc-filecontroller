@@ -16,18 +16,17 @@
 /*
  * Created by irotsoma on 8/15/2016.
  */
-package com.irotsoma.cloudbackenc.filecontroller
+package com.irotsoma.cloudbackenc.filecontroller.webui
 
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
-
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter
 
 /**
- * Security configuration for REST controllers.
- * Security is not necessary for this web application.
- * Security is handled by central controller endpoints.
+ * Security configuration for MVC controllers.
+ * Security is handled by central controller tokens.
  *
  * @author Justin Zak
  */
@@ -36,12 +35,14 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 class WebSecurityConfiguration : WebSecurityConfigurerAdapter(true) {
 
     /**
-     * Allow access to all endpoints. Security is not necessary for this web application.
-     * Security is handled by central controller endpoints.
+     * Sets default authentication to anonymous and adds a filter to process a cookie containing a valid token if present.
+     * Actual security is handled by central controller endpoints. This is mostly used for enabling UI elements for convenience.
      *
      * @param http Security configuration object.
      */
     override fun configure(http: HttpSecurity){
-        http.csrf().disable().authorizeRequests().anyRequest().permitAll()
+        http
+            .addFilter(AnonymousAuthenticationFilter("ANONYMOUS"))
+            .addFilterAfter(TokenCookieFilter(), AnonymousAuthenticationFilter::class.java)
     }
 }

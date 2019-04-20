@@ -42,7 +42,7 @@ internal class HomeController {
     @Autowired
     private lateinit var messageSource: MessageSource
     @GetMapping("/")
-    fun home(model: Model, @CookieValue(name="centralcontroller-token", required=false) token: String?): String {
+    fun home(model: Model, @CookieValue(name="\${jwt.tokenCookie}", required=false) token: String?): String {
         model.addAttribute("pageTitle", messageSource.getMessage("home.label", null, locale))
         model.addAttribute("isLoggedIn", token != null)
         return "index"

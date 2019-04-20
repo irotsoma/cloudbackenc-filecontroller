@@ -19,10 +19,12 @@
  */
 package com.irotsoma.cloudbackenc.filecontroller.webui
 
+import com.irotsoma.cloudbackenc.common.CloudBackEncRoles
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import java.util.*
@@ -48,21 +50,34 @@ class MainMenu {
             return _menus
         }
 
-    //TODO: calculate if item should be disabled and modify the template as well
-
     /**
      * Refreshes menu every time it is called to allow for dynamically enabling/disabling menu items based on role
      */
     private fun populateValues(){
         val locale = LocaleContextHolder.getLocale()
         val authentication = SecurityContextHolder.getContext().authentication
-
+        //get a list of CloudBackEncRoles from the security context
+        val authRoles = ArrayList<CloudBackEncRoles>()
+        if (authentication != null) {
+            CloudBackEncRoles.values().forEach {
+                if (authentication.authorities.contains(SimpleGrantedAuthority(it.value))) {
+                    authRoles.add(it)
+                }
+            }
+        }
         //translate properties into a localized names
         _menus.clear()
         for (menuObject in menuLayout){
+            //add menu items to the menu for parsing later
             val menuItemsHolder = ArrayList<MenuItem>()
-            menuObject.menuItems.mapTo(menuItemsHolder) { MenuItem(it.nameProperty, messageSource.getMessage(it.nameProperty, null, locale), it.path, it.validUserRoles) }
-            _menus.add(Menu(menuObject.nameProperty, messageSource.getMessage(menuObject.nameProperty, null, locale), menuObject.path, menuObject.validUserRoles, menuItemsHolder))
+            menuObject.menuItems.mapTo(menuItemsHolder) { menuItem ->
+                //determine if any of the authRoles match any of the validUserRoles or no validUserRoles were included (no restriction) for the current menu item being processed
+                val enabled = menuItem.validUserRoles.size == 0 || authRoles.any{ it in menuItem.validUserRoles.map { role -> try{ CloudBackEncRoles.valueOf(role) } catch (e:IllegalArgumentException){ "INVALID_ROLE" } }}
+                MenuItem(menuItem.nameProperty, messageSource.getMessage(menuItem.nameProperty, null, locale), menuItem.path, menuItem.validUserRoles, !enabled)
+            }
+            //determine if any of the authRoles match any of the validUserRoles or no validUserRoles were included (no restriction) for the current menu object being processed
+            val enabled = menuObject.validUserRoles.size == 0 || authRoles.any{it in menuObject.validUserRoles.map{role ->try{ CloudBackEncRoles.valueOf(role) } catch (e:IllegalArgumentException){ "INVALID_ROLE" } }}
+            _menus.add(Menu(menuObject.nameProperty, messageSource.getMessage(menuObject.nameProperty, null, locale), menuObject.path, menuObject.validUserRoles, menuItemsHolder, !enabled))
         }
     }
 }

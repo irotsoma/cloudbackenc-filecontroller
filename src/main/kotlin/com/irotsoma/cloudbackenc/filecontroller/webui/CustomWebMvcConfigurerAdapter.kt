@@ -16,7 +16,7 @@
 /*
  * Created by irotsoma on 8/17/2016.
  */
-package com.irotsoma.cloudbackenc.filecontroller
+package com.irotsoma.cloudbackenc.filecontroller.webui
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

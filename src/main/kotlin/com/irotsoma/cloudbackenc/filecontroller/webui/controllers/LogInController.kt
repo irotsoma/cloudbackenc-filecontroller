@@ -23,7 +23,6 @@ import com.irotsoma.cloudbackenc.filecontroller.data.CentralControllerUser
 import com.irotsoma.cloudbackenc.filecontroller.data.CentralControllerUserRepository
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
 import com.irotsoma.cloudbackenc.filecontroller.webui.models.LogInForm
-import io.jsonwebtoken.Jwts
 import mu.KLogging
 import org.apache.tomcat.util.codec.binary.Base64
 import org.springframework.beans.factory.annotation.Autowired
@@ -34,10 +33,6 @@ import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
-import org.springframework.security.core.authority.SimpleGrantedAuthority
-import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.validation.BindingResult
@@ -47,10 +42,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestTemplate
-import org.springframework.web.context.request.RequestContextHolder
-import org.springframework.web.context.request.ServletRequestAttributes
-import java.io.File
-import java.security.KeyStore
 import java.util.*
 import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletResponse
@@ -131,7 +122,7 @@ class LogInController {
                 }
         return if (tokenResponse.statusCode == HttpStatus.OK) {
 
-            val cookie = Cookie("centralcontroller-token", tokenResponse.body?.token)
+            val cookie = Cookie(jwtSettings.tokenCookie, tokenResponse.body?.token)
             // set the cookie age to equal the token expiration or default to 24 hrs if no expiration time was returned
             cookie.maxAge = (((tokenResponse.body?.tokenExpiration?.time ?: (Date().time + 86400000L)) - Date().time) / 1000).toInt()
             response.addCookie(cookie)
@@ -143,28 +134,8 @@ class LogInController {
                 userAccount.token = token
                 userAccount.tokenExpiration = tokenResponse.body!!.tokenExpiration
             }
-            val keyStore: KeyStore
-            try {
-                keyStore = KeyStore.getInstance(jwtSettings.keyStoreType)
-                keyStore?.load(File(jwtSettings.keyStore).inputStream(), jwtSettings.keyStorePassword?.toCharArray())
-            } catch (e: Exception){
-                throw Exception("Unable to load JWT keystore.", e)
-            }
-            val cert = keyStore.getCertificate(jwtSettings.keyAlias)
-            val roles = Jwts.parser()
-                    .setSigningKey(cert.publicKey)
-                    .parseClaimsJws(token)
-                    .body["roles"] as List<*>? ?: emptyList<String>()
-            val authorities = roles.map{
-                SimpleGrantedAuthority(it.toString())
-            }
-            val authToken = PreAuthenticatedAuthenticationToken(logInForm.username!!, token, authorities)
-            val sc = SecurityContextHolder.getContext()
-            sc.authentication = authToken
-            val session = (RequestContextHolder.currentRequestAttributes() as ServletRequestAttributes).request.session
-            session.setAttribute(SPRING_SECURITY_CONTEXT_KEY, sc)
 
-            "index"
+            "redirect:/"
         } else {
             if (logInForm.username!=null) {
                 model.addAttribute("username", logInForm.username)

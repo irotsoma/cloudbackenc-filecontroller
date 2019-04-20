@@ -41,13 +41,13 @@
             <div class="collapse navbar-collapse" id="navbarNavDropdown">
                 <ul class="navbar-nav">
                 {{#menus}}
-                    <li class="nav-item{{#containsMenuItems}} dropdown{{/containsMenuItems}}">
+                    <li class="nav-item{{#containsMenuItems}} dropdown{{/containsMenuItems}}{{#disabled}} disabled{{/disabled}}">
                         <a class="nav-link{{#containsMenuItems}} dropdown-toggle{{/containsMenuItems}}" href="{{#path}}{{.}}{{/path}}{{^path}}#{{/path}}"{{#containsMenuItems}} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"{{/containsMenuItems}}>{{name}}</a>
                         {{#containsMenuItems}}
                             <div class="dropdown-menu">
                         {{/containsMenuItems}}
                         {{#menuItems}}
-                                    <a class="dropdown-item" href="{{path}}">{{name}}</a>
+                                    <a class="dropdown-item{{#disabled}} disabled{{/disabled}}" href="{{path}}">{{name}}</a>
                         {{/menuItems}}
                         {{#containsMenuItems}}
                             </div>

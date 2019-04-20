@@ -17,10 +17,19 @@
 spring:
   mustache:
     expose-request-attributes: true
+management.endpoints.web:
+  expose: "*"
+# The below versions must match the versions of the libraries included in the package
 filecontroller.webui:
   dependencies:
     bootstrapVersion: 4.2.1
     jqueryVersion: 3.3.1-1
+# menuLayout list is the top level menu items, menuItems lists are sub menu items (only these two levels are supported)
+# for each item under menuLayout or menuItems list:
+#   nameProperty should be a property from the internationalization messages for the name of this menu/menu item
+#   path should be the path that clicking on this menu/menu item links to
+#   validUserRoles is a list of roles allowed to access this link (otherwise menu/menu item is disabled in browser)
+#   menuItems contains a list of sub menu items with the same properties as menuLayout list items (only valid for top level menuLayout list)
 filecontroller.webui.menus:
   menuLayout:
     - nameProperty: home.label
@@ -36,26 +45,24 @@ filecontroller.webui.menus:
           path: /userinfo
           validUserRoles:
             - ROLE_USER
-            - ROLE_ADMINISTRATOR
+            - ROLE_ADMIN
         - nameProperty: newUser.label
           path: /newuser
           validUserRoles:
-            - ROLE_ADMINISTRATOR
+            - ROLE_ADMIN
     - nameProperty: cloudServices.label
       validUserRoles:
         - ROLE_USER
-        - ROLE_ADMINISTRATOR
+        - ROLE_ADMIN
       menuItems:
         - nameProperty: list.label
           path: /cloudserviceslist
           validUserRoles:
             - ROLE_USER
-            - ROLE_ADMINISTRATOR
+            - ROLE_ADMIN
         - nameProperty: logIn.label
           path: /cloudserviceslogin
           validUserRoles:
             - ROLE_USER
-            - ROLE_ADMINISTRATOR
+            - ROLE_ADMIN
 
-management.endpoints.web:
-  expose: "*"
