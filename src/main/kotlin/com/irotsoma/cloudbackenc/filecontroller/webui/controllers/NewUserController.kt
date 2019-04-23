@@ -101,7 +101,6 @@ class NewUserController {
 
         val newUsername = newUserForm.username!!.trim()
 
-
         //call post to central controller users
         val requestHeaders = HttpHeaders()
         requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer $token")
