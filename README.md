@@ -1,4 +1,7 @@
-# cloudbackenc-filecontroller [![CircleCI](https://circleci.com/gh/irotsoma/cloudbackenc-filecontroller/tree/master.svg?style=svg)](https://circleci.com/gh/irotsoma/cloudbackenc-filecontroller/tree/master)
+# cloudbackenc-filecontroller 
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/0fef8c221a314a0981f192c347dbf134)](https://www.codacy.com/app/irotsoma/cloudbackenc-filecontroller?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=irotsoma/cloudbackenc-filecontroller&amp;utm_campaign=Badge_Grade)
+[![Build Status](https://travis-ci.org/irotsoma/cloudbackenc-filecontroller.svg?branch=master)](https://travis-ci.org/irotsoma/cloudbackenc-filecontroller)
 
 Distributed file system controller for CloudBackEnc
 
