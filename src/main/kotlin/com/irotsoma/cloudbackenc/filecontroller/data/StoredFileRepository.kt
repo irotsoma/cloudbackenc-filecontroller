@@ -20,6 +20,7 @@
 package com.irotsoma.cloudbackenc.filecontroller.data
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.stereotype.Repository
 import java.util.*
 
 /**
@@ -27,6 +28,7 @@ import java.util.*
  *
  * @author Justin Zak
  */
+@Repository
 interface StoredFileRepository: JpaRepository<StoredFile, Long> {
     fun findByPath(path:String): List<StoredFile>
     fun findByUuid(uuid:UUID): StoredFile?

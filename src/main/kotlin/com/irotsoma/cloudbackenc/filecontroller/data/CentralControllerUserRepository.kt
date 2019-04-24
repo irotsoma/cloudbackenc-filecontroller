@@ -20,12 +20,14 @@
 package com.irotsoma.cloudbackenc.filecontroller.data
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.stereotype.Repository
 
 /**
  * Repository interface for CentralControllerUser objects
  *
  * @author Justin Zak
  */
+@Repository
 interface CentralControllerUserRepository: JpaRepository<CentralControllerUser, Long>{
     fun findByUsername(username:String): CentralControllerUser?
     fun findByTokenNotNull(): List<CentralControllerUser>?

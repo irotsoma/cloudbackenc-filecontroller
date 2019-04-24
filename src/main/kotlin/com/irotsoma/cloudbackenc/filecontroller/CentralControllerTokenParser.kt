@@ -26,12 +26,12 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
 import java.io.File
 import java.security.KeyStore
 import java.security.PublicKey
 
-@Component
+@Service
 class CentralControllerTokenParser {
     @Autowired
     private lateinit var jwtSettings: JwtSettings

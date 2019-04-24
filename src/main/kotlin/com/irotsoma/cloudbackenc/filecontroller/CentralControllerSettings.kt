@@ -20,7 +20,6 @@
 package com.irotsoma.cloudbackenc.filecontroller
 
 import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration
 
 /**
@@ -29,7 +28,6 @@ import org.springframework.context.annotation.Configuration
  * @author Justin Zak
  */
 @Configuration
-@EnableConfigurationProperties
 @ConfigurationProperties(prefix="centralcontroller")
 class CentralControllerSettings {
     /**

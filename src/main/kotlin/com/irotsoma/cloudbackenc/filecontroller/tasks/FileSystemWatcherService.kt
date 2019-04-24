@@ -35,7 +35,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.ClassPathResource
 import org.springframework.http.*
 import org.springframework.scheduling.annotation.Scheduled
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.RestTemplate
 import java.io.File
@@ -56,7 +56,7 @@ import javax.annotation.PreDestroy
  * @author Justin Zak
  */
 
-@Component
+@Service
 class FileSystemWatcherService {
     //data class QueueItem(val uuid: UUID, val watchedLocationUuid:UUID, val path: Path, val token: String)
     /** kotlin-logging implementation*/

@@ -19,6 +19,7 @@ package com.irotsoma.cloudbackenc.filecontroller.webui.controllers
 import com.irotsoma.cloudbackenc.common.AuthenticationToken
 import com.irotsoma.cloudbackenc.common.CloudBackEncRoles
 import com.irotsoma.cloudbackenc.common.CloudBackEncUser
+import com.irotsoma.cloudbackenc.common.UserAccountState
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
 import com.irotsoma.cloudbackenc.filecontroller.data.CentralControllerUser
 import com.irotsoma.cloudbackenc.filecontroller.data.CentralControllerUserRepository
@@ -63,7 +64,9 @@ class NewUserController {
     private lateinit var messageSource: MessageSource
     @GetMapping
     fun get(model: Model, session: HttpSession): String {
-        val token = session.getAttribute("SESSION_TOKEN") ?: return "redirect:/login"
+        if (session.getAttribute("SESSION_TOKEN") == null) {
+            return "redirect:/login"
+        }
         addStaticAttributes(model)
         val roles = ArrayList<Option>()
         CloudBackEncRoles.values().forEach{ if (it != CloudBackEncRoles.ROLE_TEST) {roles.add(Option(it.value, false))} }
@@ -104,7 +107,7 @@ class NewUserController {
         //call post to central controller users
         val requestHeaders = HttpHeaders()
         requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer $token")
-        val httpEntity = HttpEntity(CloudBackEncUser(newUsername, newUserForm.password!!, newUserForm.email,true, newUserForm.roles.map{ CloudBackEncRoles.valueOf(it.name) }), requestHeaders)
+        val httpEntity = HttpEntity(CloudBackEncUser(newUsername, newUserForm.password!!, newUserForm.email,UserAccountState.ACTIVE, newUserForm.roles.map{ CloudBackEncRoles.valueOf(it.name) }), requestHeaders)
         val callResponse =
             try {
                 RestTemplate().postForEntity("${if (centralControllerSettings.useSSL) {

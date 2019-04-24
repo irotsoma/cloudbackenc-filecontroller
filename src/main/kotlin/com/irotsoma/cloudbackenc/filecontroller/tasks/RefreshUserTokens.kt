@@ -27,7 +27,7 @@ import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.*
 import org.springframework.scheduling.annotation.Scheduled
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 
 /**
@@ -35,7 +35,7 @@ import org.springframework.web.client.RestTemplate
  *
  * @author Justin Zak
  */
-@Component
+@Service
 class RefreshUserTokens {
     /** kotlin-logging implementation*/
     companion object: KLogging()

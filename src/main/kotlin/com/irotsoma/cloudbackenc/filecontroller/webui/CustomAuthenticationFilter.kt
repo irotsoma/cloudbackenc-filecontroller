@@ -61,7 +61,7 @@ class CustomAuthenticationFilter: GenericFilterBean() {
             SecurityContextHolder.getContext().authentication = session.getAttribute("SESSION_AUTHENTICATION") as Authentication
         } else {
             SpringBeanAutowiringSupport.processInjectionBasedOnServletContext(this, request.servletContext)
-            val cookies = (request as (HttpServletRequest)).cookies ?: emptyArray()
+            val cookies = request.cookies ?: emptyArray()
             if (cookies.isNotEmpty()) {
                 val token = cookies.find { it.name == tokenCookieName }?.value
                 if (token != null) {
