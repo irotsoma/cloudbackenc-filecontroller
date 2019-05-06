@@ -14,18 +14,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
+/*
+ * Created by irotsoma on 5/6/2019.
+ */
 package com.irotsoma.cloudbackenc.filecontroller.webui.controllers
 
-import com.irotsoma.cloudbackenc.common.CloudBackEncUser
+import com.irotsoma.cloudbackenc.common.cloudservices.CloudServiceExtensionList
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource
-import org.springframework.context.annotation.Lazy
 import org.springframework.context.i18n.LocaleContextHolder
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
@@ -38,9 +38,8 @@ import java.util.*
 import javax.servlet.http.HttpSession
 
 @Controller
-@Lazy
-@RequestMapping("/userinfo")
-class UserInfoController {
+@RequestMapping("/cloudserviceslist")
+class CloudServicesListController {
     /** kotlin-logging implementation*/
     companion object: KLogging()
     private val locale: Locale = LocaleContextHolder.getLocale()
@@ -50,31 +49,24 @@ class UserInfoController {
     private lateinit var messageSource: MessageSource
 
     @GetMapping
-    fun get(model: Model,session: HttpSession): String {
-        val token = session.getAttribute("SESSION_TOKEN") ?: return "redirect:/login"
-        val requestHeaders = HttpHeaders()
-        requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer $token")
-        val httpEntity = HttpEntity<Any>(requestHeaders)
+    fun get(model: Model, session: HttpSession): String {
+
         //for testing use a hostname verifier that doesn't do any verification
         if ((centralControllerSettings.useSSL) && (centralControllerSettings.disableCertificateValidation)) {
             trustSelfSignedSSL()
             logger.warn { "SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
         }
-        val userResponse =
+        val cloudServicesListResponse =
             try{
-                RestTemplate().exchange("${ if (centralControllerSettings.useSSL){"https"}else{"http"}}://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.usersPath}", HttpMethod.GET, httpEntity, CloudBackEncUser::class.java)
+                RestTemplate().exchange("${ if (centralControllerSettings.useSSL){"https"}else{"http"}}://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.cloudServicesPath}", HttpMethod.GET, null, CloudServiceExtensionList::class.java)
             } catch (e: HttpClientErrorException) {
-                return if (e.rawStatusCode == 401) {
-                    "redirect:/login"
-                } else {
-                    model.addAttribute("status", "")
-                    var errorMessage = messageSource.getMessage("centralcontroller.error.message", null, locale)
-                    if (logger.isDebugEnabled) {
-                        errorMessage += "<br><br>${e.localizedMessage}"
-                    }
-                    model.addAttribute("error", errorMessage)
-                    "error"
+                model.addAttribute("status", "")
+                var errorMessage = messageSource.getMessage("centralcontroller.error.message", null, locale)
+                if (logger.isDebugEnabled) {
+                    errorMessage += "<br><br>${e.localizedMessage}"
                 }
+                model.addAttribute("error", errorMessage)
+                return "error"
             } catch (e: ResourceAccessException) {
                 return if (e.cause?.message?.contains("Connection refused", true) == true){
                     model.addAttribute("status", "")
@@ -92,16 +84,14 @@ class UserInfoController {
                 model.addAttribute("error", e.localizedMessage)
                 return "error"
             }
-        model.addAttribute("pageTitle", messageSource.getMessage("newUser.label", null, locale))
-        model.addAttribute("usernameLabel", messageSource.getMessage("username.label",null,locale))
-        model.addAttribute("emailLabel", messageSource.getMessage("email.label",null,locale))
-        model.addAttribute("userRolesLabel", messageSource.getMessage("roles.label",null,locale))
 
-        model.addAttribute("username",userResponse.body?.username ?:"")
-        model.addAttribute("email",userResponse.body?.email ?:"")
-        model.addAttribute("userRoles",userResponse.body?.roles?.map { it.name } ?: emptyList<String>())
+        model.addAttribute("pageTitle", messageSource.getMessage("cloudServices.label", null, locale))
+        model.addAttribute("extensionNameLabel", messageSource.getMessage("name.label",null,locale))
+        model.addAttribute("extensionVersionLabel", messageSource.getMessage("version.label",null,locale))
+        model.addAttribute("extensionUuidLabel", messageSource.getMessage("uuid.label",null,locale))
 
+        model.addAttribute("extensions", cloudServicesListResponse.body)
 
-        return "userinfo"
+        return "cloudserviceslist"
     }
 }

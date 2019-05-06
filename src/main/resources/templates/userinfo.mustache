@@ -14,12 +14,12 @@
   ~ along with this program.  If not, see <http://www.gnu.org/licenses/>
   -->
 
-{{#layout}}{{#title}}User Details{{/title}}
+{{#layout}}{{#title}}{{pageTitle}}{{/title}}
 <div class="container">
     <table class="table">
         <tr>
             <td>
-                Username:
+                {{usernameLabel}}
             </td>
             <td>
                 {{username}}
@@ -27,7 +27,7 @@
         </tr>
         <tr>
             <td>
-                Email:
+                {{emailLabel}}
             </td>
             <td>
                 {{email}}
@@ -37,16 +37,16 @@
             <td>
                 <table class="table table-sm">
                     <thead>
-                    <tr>
-                        <th scope="col">Roles</th>
-                    </tr>
+                        <tr>
+                            <th scope="col">{{userRolesLabel}}</th>
+                        </tr>
                     </thead>
                     <tbody>
-                    {{#userRoles}}
-                        <tr>
-                            <td>{{.}}</td>
-                        </tr>
-                    {{/userRoles}}
+                        {{#userRoles}}
+                            <tr>
+                                <td>{{.}}</td>
+                            </tr>
+                        {{/userRoles}}
                     </tbody>
                 </table>
             </td>

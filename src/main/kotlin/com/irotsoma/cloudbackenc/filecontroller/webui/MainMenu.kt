@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
+import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
@@ -31,7 +32,7 @@ import java.util.*
 
 
 /**
- *
+ * Builds the main menu for the web ui
  *
  * @author Justin Zak
  */
@@ -60,12 +61,12 @@ class MainMenu {
         val authRoles = ArrayList<CloudBackEncRoles>()
         if (authentication != null) {
             CloudBackEncRoles.values().forEach {
-                if (authentication.authorities.contains(SimpleGrantedAuthority(it.value))) {
+                if (authentication.authorities.contains(SimpleGrantedAuthority(it.value) as GrantedAuthority)) {
                     authRoles.add(it)
                 }
             }
         }
-        //translate properties into a localized names
+        //translate properties into localized names
         _menus.clear()
         for (menuObject in menuLayout){
             //add menu items to the menu for parsing later
