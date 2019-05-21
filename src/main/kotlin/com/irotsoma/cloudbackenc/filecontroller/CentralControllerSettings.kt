@@ -48,18 +48,54 @@ class CentralControllerSettings {
     var disableCertificateValidation: Boolean = false
     /**
      * Path to the cloud services rest service
+     *
+     * Note: A leading slash will be added if not present
      */
     var cloudServicesPath: String = ""
+        set(value){
+            field = if (!value.startsWith('/')){
+                "/$value"
+            } else {
+                value
+            }
+        }
     /**
      * Path to the users rest service
+     *
+     * Note: A leading slash will be added if not present
      */
     var usersPath: String = ""
+        set(value){
+            field = if (!value.startsWith('/')){
+                "/$value"
+            } else {
+                value
+            }
+        }
     /**
      * Path to the auth rest service
+     *
+     * Note: A leading slash will be added if not present
      */
     var authPath: String = ""
+        set(value){
+            field = if (!value.startsWith('/')){
+                "/$value"
+            } else {
+                value
+            }
+        }
     /**
      * Path to the files rest service
+     *
+     * Note: A leading slash will be added if not present
      */
     var filesPath: String = ""
+        set(value){
+            field = if (!value.startsWith('/')){
+                "/$value"
+            } else {
+                value
+            }
+        }
 }

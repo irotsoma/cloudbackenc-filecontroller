@@ -22,7 +22,6 @@ buildscript {
     ext.kotlinLoggingVersion = '1.6.22'
     ext.commonsIoVersion = '1.3.2'
     ext.apacheCommonsCompressionVersion = '1.18'
-    ext.propdepsPluginVersion='0.0.10.RELEASE'
     ext.webValidationVersion = '1.0'
     ext.jjwtVersion = '0.9.1'
     //when changing the below versions don't forget to change in the application.yml also for the web ui
@@ -37,7 +36,6 @@ buildscript {
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
         classpath "org.springframework.boot:spring-boot-gradle-plugin:$springBootVersion"
-        classpath "io.spring.gradle:propdeps-plugin:$propdepsPluginVersion"
         classpath "org.liquibase:liquibase-gradle-plugin:$liquibaseGradleVersion"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokkaVersion"
         classpath "org.jetbrains.kotlin:kotlin-allopen:$kotlinVersion"
@@ -64,7 +62,6 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'signing'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
-apply plugin: 'propdeps'
 apply plugin: 'org.liquibase.gradle'
 def isReleaseVersion = !version.endsWith("SNAPSHOT")
 
@@ -89,6 +86,14 @@ if (!isReleaseVersion) {
         resolutionStrategy{
             cacheChangingModulesFor 0, 'seconds'
         }
+    }
+}
+configurations {
+//exclude spring boot logging as it will conflict with the slf4j used by kotlin logging
+    all*.exclude module : 'spring-boot-starter-logging'
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
     }
 }
 dependencies {
@@ -120,8 +125,6 @@ dependencies {
         exclude module: "spring-boot-starter-logging"
         exclude module: "logback-classic"
     }
-    optional 'org.springframework.boot:spring-boot-devtools'
-    optional 'org.springframework.boot:spring-boot-configuration-processor'
     kapt 'org.springframework.boot:spring-boot-configuration-processor'
     //jackson
     compile 'com.fasterxml.jackson.module:jackson-module-kotlin'
@@ -155,15 +158,13 @@ dependencies {
         exclude module: "spring-boot-starter-logging"
         exclude module: "logback-classic"
     }
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
 }
 sourceSets {
     main.java.srcDirs += 'src/main/kotlin'
     main.resources.srcDirs += "$buildDir/license-reports/"
 }
-//exclude spring boot logging as it will conflict with the slf4j used by kotlin logging
-configurations {
-    all*.exclude module : 'spring-boot-starter-logging'
-}
+
 //allow for excluding certain tests via external configuration
 test{
     exclude hasProperty('testExclude') ? testExclude : System.getenv('testExclude') ?: ''
@@ -175,8 +176,8 @@ apply plugin: 'com.github.hierynomus.license'
 license {
     ignoreFailures true
     mapping('kt', 'JAVADOC_STYLE')
-    mapping('fxml', 'XML_STYLE')
-    excludes(['**/*.json', '**/*.properties', '**/LICENSE', '**/*license*.html', '**/*license*.xml', '**/COPYING', '**/COPYING.LESSER', '**/*.jar'])
+    mapping('mustache', 'XML_STYLE')
+    excludes(['**/*.json', '**/*.properties', '**/LICENSE', '**/*license*.html', '**/*license*.xml', '**/COPYING', '**/COPYING.LESSER', '**/*.jar', '**/*.svg'])
 }
 task copyLicenseReports(type: Copy) {
     from "$buildDir/reports/license/"

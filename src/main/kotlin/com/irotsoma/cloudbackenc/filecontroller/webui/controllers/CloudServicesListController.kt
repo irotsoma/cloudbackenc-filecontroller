@@ -58,6 +58,9 @@ class CloudServicesListController {
         }
         val cloudServicesListResponse =
             try{
+                if (!centralControllerSettings.cloudServicesPath.startsWith('/')){
+                    centralControllerSettings.cloudServicesPath= "/"+centralControllerSettings.cloudServicesPath
+                }
                 RestTemplate().exchange("${ if (centralControllerSettings.useSSL){"https"}else{"http"}}://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.cloudServicesPath}", HttpMethod.GET, null, CloudServiceExtensionList::class.java)
             } catch (e: HttpClientErrorException) {
                 model.addAttribute("status", "")

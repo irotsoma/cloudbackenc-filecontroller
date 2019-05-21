@@ -1,0 +1,86 @@
+<!--
+  ~ Copyright (C) 2016-2019  Irotsoma, LLC
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Lesser General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU Lesser General Public License for more details.
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>
+  -->
+
+{{#layout}}{{#title}}{{pageTitle}}{{/title}}
+
+<div class="container">
+    <div class="row">
+        <div class="disabled-list col-md-5 card card-body bg-light text-right">
+<!--            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <span class="search-icon"><img src="/svg/magnifying-glass.svg" alt="{{searchLabel}}"></span>
+                        <input type="text" id="disabled-search" name="disabled-search" class="form-control search-input" placeholder="{{searchLabel}}">
+                    </div>
+                </div>
+            </div>-->
+            <ul class="list-group">
+                {{#disabledExtensions}}
+                    <li class="list-group-item" id="{{extensionUuid}}" data-toggle="tooltip" data-placement="top" title="{{extensionName}}; version {{releaseVersion}}">{{extensionName}}</li>
+                {{/disabledExtensions}}
+            </ul>
+        </div>
+        <div class="list-arrows align-self-center col-md-1">
+            <form id="cloud-services-setup-form" action="/cloudservicessetup" method="POST">
+                <input type="hidden" id="disabled-selected-item" name="disabled-selected-item">
+                <input type="hidden" id="enabled-selected-item"name="enabled-selected-item">
+                <button value="remove" name="remove" type="submit" class="btn btn-default btn-sm left-button"></button>
+                <button value="add" name="add" type="submit" class="btn btn-default btn-sm right-button"></button>
+            </form>
+        </div>
+        <div class="enabled-list col-md-5 card card-body bg-light">
+            <!--<div class="row">
+                <div class="col-md-12">
+                    <div class="input-group">
+                        <span class="search-icon"><img src="/svg/magnifying-glass.svg" alt="{{searchLabel}}"></span>
+                        <input type="text" id="enabled-search" name="enabled-search" class="form-control search-input" placeholder="{{searchLabel}}" />
+                    </div>
+                </div>
+            </div>-->
+            <ul class="list-group">
+                {{#enabledExtensions}}
+                    <li class="list-group-item" id="{{extensionUuid}}" data-toggle="tooltip" data-placement="top" title="{{extensionName}}; version {{releaseVersion}}">{{extensionName}}</li>
+                {{/enabledExtensions}}
+            </ul>
+        </div>
+
+
+
+    </div>
+</div>
+<script type="text/javascript">
+    jQuery(document).ready(function()
+    {
+        $('div.disabled-list ul li').click(function(event)
+        {
+            if (!$(this).hasClass('active')){
+                $('div.disabled-list ul li').removeClass('active');
+            }
+            $(this).toggleClass('active');
+            $("input#disabled-selected-item").val(event.target.id);
+        });
+        $('div.enabled-list ul li').click(function(event)
+        {
+            if (!$(this).hasClass('active')){
+                $('div.enabled-list ul li').removeClass('active');
+            }
+            $(this).toggleClass('active');
+            $("input#enabled-selected-item").val(event.target.id);
+        });
+    });
+</script>
+
+{{/layout}}

@@ -63,9 +63,9 @@ filecontroller.webui.menus:
         - nameProperty: list.label
           path: /cloudserviceslist
           validUserRoles:
-        - nameProperty: logIn.label
-          path: /cloudserviceslogin
-          validUserRoles:
-            - ROLE_USER
-            - ROLE_ADMIN
+        - nameProperty: setupCloudServices.label
+          path: /cloudservicessetup
+          #validUserRoles:
+          #  - ROLE_USER
+          #  - ROLE_ADMIN
 
