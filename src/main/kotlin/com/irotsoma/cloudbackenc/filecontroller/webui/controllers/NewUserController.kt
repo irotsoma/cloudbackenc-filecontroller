@@ -21,6 +21,7 @@ import com.irotsoma.cloudbackenc.common.CloudBackEncRoles
 import com.irotsoma.cloudbackenc.common.CloudBackEncUser
 import com.irotsoma.cloudbackenc.common.UserAccountState
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
+import com.irotsoma.cloudbackenc.filecontroller.SessionConfiguration
 import com.irotsoma.cloudbackenc.filecontroller.data.CentralControllerUser
 import com.irotsoma.cloudbackenc.filecontroller.data.CentralControllerUserRepository
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
@@ -53,7 +54,7 @@ import javax.validation.Valid
 @RequestMapping("/newuser")
 class NewUserController {
     /** kotlin-logging implementation*/
-    companion object: KLogging()
+    private companion object: KLogging()
     private val locale: Locale = LocaleContextHolder.getLocale()
 
     @Autowired
@@ -62,9 +63,12 @@ class NewUserController {
     private lateinit var centralControllerUserRepository: CentralControllerUserRepository
     @Autowired
     private lateinit var messageSource: MessageSource
+    @Autowired
+    private lateinit var sessionConfiguration: SessionConfiguration
+
     @GetMapping
     fun get(model: Model, session: HttpSession): String {
-        if (session.getAttribute("SESSION_TOKEN") == null) {
+        if (session.getAttribute(sessionConfiguration.sessionSecurityTokenAttribute) == null) {
             return "redirect:/login"
         }
         addStaticAttributes(model)
@@ -75,7 +79,7 @@ class NewUserController {
     }
     @PostMapping
     fun createUser( @Valid newUserForm: NewUserForm, bindingResult: BindingResult, model: Model, session: HttpSession): String {
-        val token = session.getAttribute("SESSION_TOKEN") ?: return "redirect:/login"
+        val token = session.getAttribute(sessionConfiguration.sessionSecurityTokenAttribute) ?: return "redirect:/login"
         if (bindingResult.hasErrors()) {
             for (error in bindingResult.fieldErrors){
                 model.addAttribute("${error.field}Error", error.defaultMessage)
@@ -99,7 +103,7 @@ class NewUserController {
         //for testing use a hostname verifier that doesn't do any verification
         if ((centralControllerSettings.useSSL) && (centralControllerSettings.disableCertificateValidation)) {
             trustSelfSignedSSL()
-            LogInController.logger.warn { "SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
+            logger.warn { "SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
         }
 
         val newUsername = newUserForm.username!!.trim()

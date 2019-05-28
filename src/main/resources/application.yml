@@ -19,6 +19,7 @@ spring:
     expose-request-attributes: true
 management.endpoints.web:
   expose: "*"
+
 # The below versions must match the versions of the libraries included in the package
 filecontroller.webui:
   dependencies:
@@ -65,7 +66,10 @@ filecontroller.webui.menus:
           validUserRoles:
         - nameProperty: setupCloudServices.label
           path: /cloudservicessetup
-          #validUserRoles:
-          #  - ROLE_USER
-          #  - ROLE_ADMIN
-
+          validUserRoles:
+            - ROLE_USER
+            - ROLE_ADMIN
+# Session attribute names for central controller login session
+filecontroller.session:
+  sessionAuthenticationAttribute: SESSION_AUTHENTICATION
+  sessionSecurityTokenAttribute: SESSION_TOKEN

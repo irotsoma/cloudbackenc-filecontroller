@@ -20,6 +20,7 @@
 package com.irotsoma.cloudbackenc.filecontroller.webui
 
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerTokenParser
+import com.irotsoma.cloudbackenc.filecontroller.SessionConfiguration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
@@ -45,9 +46,12 @@ class CustomAuthenticationFilter: GenericFilterBean() {
     private lateinit var tokenCookieName: String
     @Autowired
     private lateinit var centralControllerTokenParser: CentralControllerTokenParser
+    @Autowired
+    private lateinit var sessionConfiguration: SessionConfiguration
     /**
      * Implements the authentication filter.
-     * Loads the appropriate cookie if found and uses the credentials claimed in that token.
+     * If session attribute already exists, sets this value in SecurityContextHolder.
+     * Otherwise, loads the appropriate cookie if found and uses the credentials claimed in that token.
      *
      * @param request The servlet request
      * @param response The servlet response
@@ -56,16 +60,18 @@ class CustomAuthenticationFilter: GenericFilterBean() {
      * @author Justin Zak
      */
     override fun doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
+        SpringBeanAutowiringSupport.processInjectionBasedOnServletContext(this, request.servletContext)
         val session = (request as HttpServletRequest).session
-        if (session.getAttribute("SESSION_AUTHENTICATION") != null){
-            SecurityContextHolder.getContext().authentication = session.getAttribute("SESSION_AUTHENTICATION") as Authentication
+        if (session.getAttribute(sessionConfiguration.sessionAuthenticationAttribute) != null){
+            SecurityContextHolder.getContext().authentication = session.getAttribute(sessionConfiguration.sessionAuthenticationAttribute) as Authentication
         } else {
-            SpringBeanAutowiringSupport.processInjectionBasedOnServletContext(this, request.servletContext)
             val cookies = request.cookies ?: emptyArray()
             if (cookies.isNotEmpty()) {
                 val token = cookies.find { it.name == tokenCookieName }?.value
                 if (token != null) {
                     SecurityContextHolder.getContext().authentication = centralControllerTokenParser.getAuthentication(token)
+                    //also save the token in the session attributes for the convenience of controllers
+                    session.setAttribute(sessionConfiguration.sessionSecurityTokenAttribute, token)
                 }
             }
         }

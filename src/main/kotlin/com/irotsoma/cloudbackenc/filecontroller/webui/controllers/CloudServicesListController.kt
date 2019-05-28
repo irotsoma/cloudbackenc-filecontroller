@@ -41,7 +41,7 @@ import javax.servlet.http.HttpSession
 @RequestMapping("/cloudserviceslist")
 class CloudServicesListController {
     /** kotlin-logging implementation*/
-    companion object: KLogging()
+    private companion object: KLogging()
     private val locale: Locale = LocaleContextHolder.getLocale()
     @Autowired
     private lateinit var centralControllerSettings: CentralControllerSettings

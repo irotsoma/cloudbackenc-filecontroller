@@ -38,7 +38,7 @@ import org.springframework.web.client.RestTemplate
 @Service
 class RefreshUserTokens {
     /** kotlin-logging implementation*/
-    companion object: KLogging()
+    private companion object: KLogging()
     @Autowired
     lateinit var centralControllerUserRepository: CentralControllerUserRepository
     @Autowired

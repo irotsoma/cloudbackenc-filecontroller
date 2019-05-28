@@ -19,6 +19,7 @@ package com.irotsoma.cloudbackenc.filecontroller.webui.controllers
 import com.irotsoma.cloudbackenc.common.AuthenticationToken
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerTokenParser
+import com.irotsoma.cloudbackenc.filecontroller.SessionConfiguration
 import com.irotsoma.cloudbackenc.filecontroller.data.CentralControllerUser
 import com.irotsoma.cloudbackenc.filecontroller.data.CentralControllerUserRepository
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
@@ -54,7 +55,7 @@ import javax.validation.Valid
 @RequestMapping("/login")
 class LogInController {
     /** kotlin-logging implementation*/
-    companion object: KLogging()
+    private companion object: KLogging()
     private val locale: Locale = LocaleContextHolder.getLocale()
 
     @Autowired
@@ -67,6 +68,8 @@ class LogInController {
     private lateinit var tokenCookieName: String
     @Autowired
     private lateinit var centralControllerTokenParser: CentralControllerTokenParser
+    @Autowired
+    private lateinit var sessionConfiguration: SessionConfiguration
     @GetMapping
     fun get(model: Model): String {
         addStaticAttributes(model)
@@ -148,8 +151,8 @@ class LogInController {
                 response.addCookie(cookie)
             }
             //add session attributes used by the custom AuthenticationFilter
-            session.setAttribute("SESSION_AUTHENTICATION", centralControllerTokenParser.getAuthentication(token))
-            session.setAttribute("SESSION_TOKEN", token)
+            session.setAttribute(sessionConfiguration.sessionAuthenticationAttribute, centralControllerTokenParser.getAuthentication(token))
+            session.setAttribute(sessionConfiguration.sessionSecurityTokenAttribute, token)
             "redirect:/"
         } else {
             if (logInForm.username!=null) {

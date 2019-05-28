@@ -18,6 +18,7 @@ package com.irotsoma.cloudbackenc.filecontroller.webui.controllers
 
 import com.irotsoma.cloudbackenc.common.CloudBackEncUser
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
+import com.irotsoma.cloudbackenc.filecontroller.SessionConfiguration
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
@@ -42,16 +43,18 @@ import javax.servlet.http.HttpSession
 @RequestMapping("/userinfo")
 class UserInfoController {
     /** kotlin-logging implementation*/
-    companion object: KLogging()
+    private companion object: KLogging()
     private val locale: Locale = LocaleContextHolder.getLocale()
     @Autowired
     private lateinit var centralControllerSettings: CentralControllerSettings
     @Autowired
     private lateinit var messageSource: MessageSource
+    @Autowired
+    private lateinit var sessionConfiguration: SessionConfiguration
 
     @GetMapping
     fun get(model: Model,session: HttpSession): String {
-        val token = session.getAttribute("SESSION_TOKEN") ?: return "redirect:/login"
+        val token = session.getAttribute(sessionConfiguration.sessionSecurityTokenAttribute) ?: return "redirect:/login"
         val requestHeaders = HttpHeaders()
         requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer $token")
         val httpEntity = HttpEntity<Any>(requestHeaders)

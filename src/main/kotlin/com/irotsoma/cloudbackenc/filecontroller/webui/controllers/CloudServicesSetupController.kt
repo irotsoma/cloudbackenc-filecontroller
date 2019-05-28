@@ -18,11 +18,14 @@ package com.irotsoma.cloudbackenc.filecontroller.webui.controllers
 
 import com.irotsoma.cloudbackenc.common.cloudservices.CloudServiceExtensionList
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
+import com.irotsoma.cloudbackenc.filecontroller.SessionConfiguration
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
+import org.springframework.http.HttpEntity
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
@@ -42,28 +45,33 @@ import javax.servlet.http.HttpSession
 @RequestMapping("/cloudservicessetup")
 class CloudServicesSetupController{
     /** kotlin-logging implementation*/
-    companion object: KLogging()
+    private companion object: KLogging()
     private val locale: Locale = LocaleContextHolder.getLocale()
     @Autowired
     private lateinit var centralControllerSettings: CentralControllerSettings
     @Autowired
     private lateinit var messageSource: MessageSource
+    @Autowired
+    private lateinit var sessionConfiguration: SessionConfiguration
 
     @GetMapping
-    fun get(model: Model): String {
-
+    fun get(model: Model, session: HttpSession): String {
+        val token = session.getAttribute(sessionConfiguration.sessionSecurityTokenAttribute) ?: return "redirect:/login"
+        val requestHeaders = HttpHeaders()
+        requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer $token")
+        val httpEntity = HttpEntity<Any>(requestHeaders)
         //for testing use a hostname verifier that doesn't do any verification
         if ((centralControllerSettings.useSSL) && (centralControllerSettings.disableCertificateValidation)) {
             trustSelfSignedSSL()
-            CloudServicesListController.logger.warn { "SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
+            logger.warn { "SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
         }
         val cloudServicesListResponse =
                 try{
-                    RestTemplate().exchange("${ if (centralControllerSettings.useSSL){"https"}else{"http"}}://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.cloudServicesPath}", HttpMethod.GET, null, CloudServiceExtensionList::class.java)
+                    RestTemplate().exchange("${ if (centralControllerSettings.useSSL){"https"}else{"http"}}://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.cloudServicesPath}", HttpMethod.GET, httpEntity, CloudServiceExtensionList::class.java)
                 } catch (e: HttpClientErrorException) {
                     model.addAttribute("status", "")
                     var errorMessage = messageSource.getMessage("centralcontroller.error.message", null, locale)
-                    if (CloudServicesListController.logger.isDebugEnabled) {
+                    if (logger.isDebugEnabled) {
                         errorMessage += "<br><br>${e.localizedMessage}"
                     }
                     model.addAttribute("error", errorMessage)
@@ -72,7 +80,7 @@ class CloudServicesSetupController{
                     return if (e.cause?.message?.contains("Connection refused", true) == true){
                         model.addAttribute("status", "")
                         var errorMessage = messageSource.getMessage("centralcontroller.error.message", null, locale)
-                        if (CloudServicesListController.logger.isDebugEnabled) {
+                        if (logger.isDebugEnabled) {
                             errorMessage += "<br><br>${e.localizedMessage}"
                         }
                         model.addAttribute("error", errorMessage)
@@ -87,11 +95,11 @@ class CloudServicesSetupController{
                 }
         val cloudServicesUserListResponse =
                 try{
-                    RestTemplate().exchange("${ if (centralControllerSettings.useSSL){"https"}else{"http"}}://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.cloudServicesPath}/user", HttpMethod.GET, null, CloudServiceExtensionList::class.java)
+                    RestTemplate().exchange("${ if (centralControllerSettings.useSSL){"https"}else{"http"}}://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.cloudServicesPath}/user", HttpMethod.GET, httpEntity, CloudServiceExtensionList::class.java)
                 } catch (e: HttpClientErrorException) {
                     model.addAttribute("status", "")
                     var errorMessage = messageSource.getMessage("centralcontroller.error.message", null, locale)
-                    if (CloudServicesListController.logger.isDebugEnabled) {
+                    if (logger.isDebugEnabled) {
                         errorMessage += "<br><br>${e.localizedMessage}"
                     }
                     model.addAttribute("error", errorMessage)
@@ -100,7 +108,7 @@ class CloudServicesSetupController{
                     return if (e.cause?.message?.contains("Connection refused", true) == true){
                         model.addAttribute("status", "")
                         var errorMessage = messageSource.getMessage("centralcontroller.error.message", null, locale)
-                        if (CloudServicesListController.logger.isDebugEnabled) {
+                        if (logger.isDebugEnabled) {
                             errorMessage += "<br><br>${e.localizedMessage}"
                         }
                         model.addAttribute("error", errorMessage)
@@ -115,20 +123,11 @@ class CloudServicesSetupController{
                 }
         val disabledCloudServicesList = cloudServicesListResponse.body
         val enabledCloudServicesList = cloudServicesUserListResponse.body
-        enabledCloudServicesList.forEach { disabledCloudServicesList.remove(it) }
-
-
+        enabledCloudServicesList?.forEach { disabledCloudServicesList?.remove(it) }
 
         addStaticAttributes(model)
         model.addAttribute("disabledExtensions", disabledCloudServicesList)
         model.addAttribute("enabledExtensions", enabledCloudServicesList)
-//        val list = CloudServiceExtensionList()
-//        list.add(CloudServiceExtension(UUID.randomUUID().toString(), "testName", 1))
-//        list.add(CloudServiceExtension(UUID.randomUUID().toString(), "blah", 1))
-//        list.add(CloudServiceExtension(UUID.randomUUID().toString(), "silly", 1))
-//        model.addAttribute("disabledExtensions", list)
-
-
 
         return "cloudservicessetup"
     }
@@ -142,7 +141,7 @@ class CloudServicesSetupController{
     }
 
     @PostMapping(params = ["remove"])
-    fun removeCloudService(@RequestBody formData: MultiValueMap<String, String>, model: Model): String{
+    fun removeCloudService(@RequestBody formData: MultiValueMap<String, String>, model: Model, session: HttpSession): String{
 
 
 

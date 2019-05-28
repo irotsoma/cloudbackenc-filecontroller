@@ -60,7 +60,7 @@ import javax.annotation.PreDestroy
 class FileSystemWatcherService {
     //data class QueueItem(val uuid: UUID, val watchedLocationUuid:UUID, val path: Path, val token: String)
     /** kotlin-logging implementation*/
-    companion object: KLogging(){
+    private companion object: KLogging(){
         /** Time to wait for a new poll event before checking if the service is shutting down. */
         private const val POLL_TIMEOUT = 5000L
     }
