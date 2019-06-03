@@ -70,9 +70,7 @@ class FileSystemWatcherService {
     @Autowired lateinit var storedFileRepository: StoredFileRepository
     @Autowired lateinit var storedFileVersionRepository: StoredFileVersionRepository
     @Autowired lateinit var centralControllerUserRepository: CentralControllerUserRepository
-   /* @Autowired
-    lateinit var encryptionExtensionRepository: EncryptionExtensionRepository
-*/
+
     @Value("\${filecontroller.frequencies.recheckblacklist}")
     private var recheckBlacklistFrequency = 600000L
 
@@ -270,7 +268,6 @@ class FileSystemWatcherService {
                             val inputFile = File(storedFile.path)
                             BzipFile().compressFile(inputFile, compressedFile)
                             val centralControllerURL = "$centralControllerProtocol://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.filesPath}"
-                            //TODO: better user token system
                             val requestHeaders = HttpHeaders()
                             requestHeaders.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                             requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer ${watchedLocation.user.token}")

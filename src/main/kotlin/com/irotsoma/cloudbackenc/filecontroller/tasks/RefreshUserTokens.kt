@@ -21,6 +21,7 @@ package com.irotsoma.cloudbackenc.filecontroller.tasks
 
 import com.irotsoma.cloudbackenc.common.AuthenticationToken
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
+import com.irotsoma.cloudbackenc.filecontroller.CentralControllerTokenParser
 import com.irotsoma.cloudbackenc.filecontroller.data.CentralControllerUserRepository
 import com.irotsoma.cloudbackenc.filecontroller.trustSelfSignedSSL
 import mu.KLogging
@@ -29,6 +30,7 @@ import org.springframework.http.*
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import java.util.*
 
 /**
  *
@@ -40,9 +42,11 @@ class RefreshUserTokens {
     /** kotlin-logging implementation*/
     private companion object: KLogging()
     @Autowired
-    lateinit var centralControllerUserRepository: CentralControllerUserRepository
+    private lateinit var centralControllerUserRepository: CentralControllerUserRepository
     @Autowired
-    lateinit var centralControllerSettings: CentralControllerSettings
+    private lateinit var centralControllerSettings: CentralControllerSettings
+    @Autowired
+    private lateinit var centralControllerTokenParser: CentralControllerTokenParser
 
     @Scheduled(fixedDelayString="\${filecontroller.frequencies.tokenrefresh}")
     fun doRefresh(){
@@ -65,10 +69,20 @@ class RefreshUserTokens {
                 RestTemplate().exchange(centralControllerURL, HttpMethod.GET, httpEntity, AuthenticationToken::class.java)
             } catch (ignore: Exception) { null }
 
-            //TODO: Check for other errors and remove the token from the DB if it's no longer valid (i.e. received unauthorized error with current token)
-
             if (response?.body?.token != null){
-                user.token = response.body?.token
+                val authentication = centralControllerTokenParser.getAuthentication(response.body!!.token)
+                if (!authentication.isAuthenticated){
+                    logger.warn { "Central controller returned unauthenticated token for ${user.username}" }
+                    user.token = null
+                    user.tokenExpiration = null
+                } else if ((response.body?.tokenExpiration != null) && (response.body!!.tokenExpiration!! < Date())) {
+                    logger.warn { "Central controller returned expired token for ${user.username}" }
+                    user.token = null
+                    user.tokenExpiration = null
+                } else {
+                    user.token = response.body?.token
+                    user.tokenExpiration = response.body?.tokenExpiration
+                }
                 centralControllerUserRepository.save(user)
             }
 
