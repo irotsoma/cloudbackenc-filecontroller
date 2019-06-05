@@ -37,7 +37,7 @@ class WebSecurityConfiguration : WebSecurityConfigurerAdapter(true) {
 
     /**
      * Sets default authentication to anonymous and adds a filter to process a cookie containing a valid token if present.
-     * Actual security is handled by central controller endpoints. This is mostly used for enabling UI elements for convenience.
+     * Actual security is handled by central controller endpoints. This is mostly used for  for convenience when enabling UI elements.
      *
      * @param http Security configuration object.
      */

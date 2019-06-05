@@ -16,6 +16,11 @@
 
 package com.irotsoma.cloudbackenc.filecontroller.webui
 
+/**
+ * Object representing items in a menu
+ *
+ * @author Justin Zak
+ */
 class MenuItem(){
     var nameProperty: String =""
     var name: String = ""

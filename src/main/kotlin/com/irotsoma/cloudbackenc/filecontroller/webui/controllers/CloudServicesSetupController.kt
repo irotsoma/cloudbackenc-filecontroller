@@ -134,6 +134,57 @@ class CloudServicesSetupController{
 
     @PostMapping(params = ["add"])
     fun addCloudService(@RequestBody formData: MultiValueMap<String, String>, response: HttpServletResponse, model: Model, session: HttpSession): String{
+        val token = session.getAttribute(sessionConfiguration.sessionSecurityTokenAttribute) ?: return "redirect:/login"
+        val requestHeaders = HttpHeaders()
+        requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer $token")
+        val httpEntity = HttpEntity<Any>(requestHeaders)
+        //for testing use a hostname verifier that doesn't do any verification
+        if ((centralControllerSettings.useSSL) && (centralControllerSettings.disableCertificateValidation)) {
+            trustSelfSignedSSL()
+            logger.warn { "SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
+        }
+        val selectedItem = formData["disabled-selected-item"]?.get(0)
+        if (selectedItem.isNullOrBlank()){
+            addStaticAttributes(model)
+            model.addAttribute("disabledExtensions", formData["disabledExtensions"])
+            model.addAttribute("enabledExtensions", formData["enabledExtensions"])
+            model.addAttribute("formError", messageSource.getMessage("cloudServicesSetupController.add.noSelection.error.message", null, locale))
+            return "cloudservicessetup"
+        }
+        val cloudServicesListResponse =
+                try{
+                    RestTemplate().exchange("${ if (centralControllerSettings.useSSL){"https"}else{"http"}}://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.cloudServicesPath}/$selectedItem", HttpMethod.GET, httpEntity, CloudServiceExtensionList::class.java)
+                } catch (e: HttpClientErrorException) {
+                    model.addAttribute("status", "")
+                    var errorMessage = messageSource.getMessage("centralcontroller.error.message", null, locale)
+                    if (logger.isDebugEnabled) {
+                        errorMessage += "<br><br>${e.localizedMessage}"
+                    }
+                    model.addAttribute("error", errorMessage)
+                    return "error"
+                } catch (e: ResourceAccessException) {
+                    return if (e.cause?.message?.contains("Connection refused", true) == true){
+                        model.addAttribute("status", "")
+                        var errorMessage = messageSource.getMessage("centralcontroller.error.message", null, locale)
+                        if (logger.isDebugEnabled) {
+                            errorMessage += "<br><br>${e.localizedMessage}"
+                        }
+                        model.addAttribute("error", errorMessage)
+                        "error"
+                    } else {
+                        model.addAttribute("error", e.localizedMessage)
+                        "error"
+                    }
+                } catch (e:Exception){
+                    model.addAttribute("error", e.localizedMessage)
+                    return "error"
+                }
+        val selectedExtension = cloudServicesListResponse.body?.filter { it.extensionUuid == selectedItem }?.get(0)
+        if (selectedExtension?.requiresPassword == true || selectedExtension?.requiresUsername == true){
+            TODO("handle case by popup prompting for username and/or password")
+        }
+
+
 
 
         addStaticAttributes(model)
@@ -142,8 +193,15 @@ class CloudServicesSetupController{
 
     @PostMapping(params = ["remove"])
     fun removeCloudService(@RequestBody formData: MultiValueMap<String, String>, model: Model, session: HttpSession): String{
-
-
+        val selectedItem = formData["enabled-selected-item"]?.get(0)
+        if (selectedItem.isNullOrBlank()){
+            addStaticAttributes(model)
+            model.addAttribute("disabledExtensions", formData["disabledExtensions"])
+            model.addAttribute("enabledExtensions", formData["enabledExtensions"])
+            model.addAttribute("formError", messageSource.getMessage("cloudServicesSetupController.remove.noSelection.error.message", null, locale))
+            return "cloudservicessetup"
+        }
+        TODO("Finish")
 
         addStaticAttributes(model)
         return "cloudservicessetup"

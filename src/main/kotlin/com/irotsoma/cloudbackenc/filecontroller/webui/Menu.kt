@@ -20,7 +20,7 @@
 package com.irotsoma.cloudbackenc.filecontroller.webui
 
 /**
- *
+ * Object representing a top level Menu
  *
  * @author Justin Zak
  */
