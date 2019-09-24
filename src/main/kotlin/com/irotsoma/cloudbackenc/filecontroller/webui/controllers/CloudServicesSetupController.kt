@@ -203,10 +203,12 @@ class CloudServicesSetupController{
             model.addAttribute("formError", messageSource.getMessage("cloudServicesSetupController.remove.noSelection.error.message", null, locale))
             return "cloudservicessetup"
         }
+        //selected item ID has the UUID and username separated by a null character
+        val extensionId = selectedItem.split('\u0000')
         val token = session.getAttribute(sessionConfiguration.sessionSecurityTokenAttribute) ?: return "redirect:/login"
         val requestHeaders = HttpHeaders()
         requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer $token")
-        val httpEntity = HttpEntity(CloudServiceAuthenticationRequest(),requestHeaders)
+        val httpEntity = HttpEntity(CloudServiceAuthenticationRequest(extensionId[1],null,extensionId[0],null),requestHeaders)
         //for testing use a hostname verifier that doesn't do any verification
         if ((centralControllerSettings.useSSL) && (centralControllerSettings.disableCertificateValidation)) {
             trustSelfSignedSSL()
@@ -218,7 +220,7 @@ class CloudServicesSetupController{
                         "https"
                     } else {
                         "http"
-                    }}://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.cloudServicesPath}/logout/$selectedItem", HttpMethod.POST, httpEntity, CloudServiceAuthenticationState::class.java)
+                    }}://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.cloudServicesPath}/logout/${extensionId[0]}", HttpMethod.POST, httpEntity, CloudServiceAuthenticationState::class.java)
                 } catch (e: HttpClientErrorException) {
                     model.addAttribute("status", "")
                     var errorMessage = messageSource.getMessage("centralcontroller.error.message", null, locale)

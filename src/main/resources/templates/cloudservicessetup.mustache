@@ -43,7 +43,8 @@
                     </div>
                 {{/formError}}
                 <input type="hidden" id="disabled-selected-item" name="disabled-selected-item">
-                <input type="hidden" id="enabled-selected-item"name="enabled-selected-item">
+                <input type="hidden" id="enabled-selected-item" name="enabled-selected-item">
+                <input type="hidden" id="enabled-selected-item-user" name="enabled-selected-item-user">
                 <button value="remove" name="remove" type="submit" class="btn btn-default btn-sm left-button"></button>
                 <button value="add" name="add" type="submit" class="btn btn-default btn-sm right-button"></button>
             </form>
@@ -59,7 +60,8 @@
             </div>-->
             <ul class="list-group">
                 {{#enabledExtensions}}
-                    <li class="list-group-item" id="{{extensionUuid}}" data-toggle="tooltip" data-placement="top" title="{{extensionName}}; version {{releaseVersion}}">{{extensionName}}</li>
+                    <!--uses both uuid and user ID separated by a null character as the list item id-->
+                    <li class="list-group-item" id="{{extensionUuid}}&#x00;{{loggedInAsUserId}}" data-toggle="tooltip" data-placement="top" title="{{extensionName}}; version {{releaseVersion}}">{{extensionName}}</li>
                 {{/enabledExtensions}}
             </ul>
         </div>

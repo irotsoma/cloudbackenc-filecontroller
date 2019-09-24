@@ -25,19 +25,19 @@ import com.irotsoma.cloudbackenc.common.RestExceptionExceptions
 /**
  * Custom exception for trying to access /file-encryptors with an invalid UUID
  */
-class InvalidEncryptionUUIDException() : RestException(RestExceptionExceptions.Invalid_Encryption_Service_UUID)
+class InvalidEncryptionUUIDException() : RestException(RestExceptionExceptions.INVALID_ENCRYPTION_SERVICE_UUID)
 
 /**
  * Custom exception for when the system can not find the file requested to be encrypted.
  */
-class EncryptionFileNotFoundException(): RestException(RestExceptionExceptions.File_Not_Found)
+class EncryptionFileNotFoundException(): RestException(RestExceptionExceptions.FILE_NOT_FOUND)
 
 /**
  * Custom exception for when the system does not support the requested algorithm.
  */
-class UnsupportedEncryptionAlgorithmException(): RestException(RestExceptionExceptions.Unsupported_Encryption_Algorithm)
+class UnsupportedEncryptionAlgorithmException(): RestException(RestExceptionExceptions.UNSUPPORTED_ENCRYPTION_ALGORITHM)
 
 /**
  * Custom exception for when the system can not write the decrypted file to the disk.
  */
-class FileNotWritatbleException() : RestException(RestExceptionExceptions.File_Not_Writable)
+class FileNotWritableException() : RestException(RestExceptionExceptions.FILE_NOT_WRITABLE)
