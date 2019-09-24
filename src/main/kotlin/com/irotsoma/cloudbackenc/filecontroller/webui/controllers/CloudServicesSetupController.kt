@@ -16,6 +16,8 @@
 
 package com.irotsoma.cloudbackenc.filecontroller.webui.controllers
 
+import com.irotsoma.cloudbackenc.common.cloudservices.CloudServiceAuthenticationRequest
+import com.irotsoma.cloudbackenc.common.cloudservices.CloudServiceAuthenticationState
 import com.irotsoma.cloudbackenc.common.cloudservices.CloudServiceExtensionList
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
 import com.irotsoma.cloudbackenc.filecontroller.SessionConfiguration
@@ -134,6 +136,14 @@ class CloudServicesSetupController{
 
     @PostMapping(params = ["add"])
     fun addCloudService(@RequestBody formData: MultiValueMap<String, String>, response: HttpServletResponse, model: Model, session: HttpSession): String{
+        val selectedItem = formData["disabled-selected-item"]?.get(0)
+        if (selectedItem.isNullOrBlank()){
+            addStaticAttributes(model)
+            model.addAttribute("disabledExtensions", formData["disabledExtensions"])
+            model.addAttribute("enabledExtensions", formData["enabledExtensions"])
+            model.addAttribute("formError", messageSource.getMessage("cloudServicesSetupController.add.noSelection.error.message", null, locale))
+            return "cloudservicessetup"
+        }
         val token = session.getAttribute(sessionConfiguration.sessionSecurityTokenAttribute) ?: return "redirect:/login"
         val requestHeaders = HttpHeaders()
         requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer $token")
@@ -142,14 +152,6 @@ class CloudServicesSetupController{
         if ((centralControllerSettings.useSSL) && (centralControllerSettings.disableCertificateValidation)) {
             trustSelfSignedSSL()
             logger.warn { "SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
-        }
-        val selectedItem = formData["disabled-selected-item"]?.get(0)
-        if (selectedItem.isNullOrBlank()){
-            addStaticAttributes(model)
-            model.addAttribute("disabledExtensions", formData["disabledExtensions"])
-            model.addAttribute("enabledExtensions", formData["enabledExtensions"])
-            model.addAttribute("formError", messageSource.getMessage("cloudServicesSetupController.add.noSelection.error.message", null, locale))
-            return "cloudservicessetup"
         }
         val cloudServicesListResponse =
                 try{
@@ -192,16 +194,56 @@ class CloudServicesSetupController{
     }
 
     @PostMapping(params = ["remove"])
-    fun removeCloudService(@RequestBody formData: MultiValueMap<String, String>, model: Model, session: HttpSession): String{
+    fun removeCloudService(@RequestBody formData: MultiValueMap<String, String>, model: Model, session: HttpSession): String {
         val selectedItem = formData["enabled-selected-item"]?.get(0)
-        if (selectedItem.isNullOrBlank()){
+        if (selectedItem.isNullOrBlank()) {
             addStaticAttributes(model)
             model.addAttribute("disabledExtensions", formData["disabledExtensions"])
             model.addAttribute("enabledExtensions", formData["enabledExtensions"])
             model.addAttribute("formError", messageSource.getMessage("cloudServicesSetupController.remove.noSelection.error.message", null, locale))
             return "cloudservicessetup"
         }
-        TODO("Finish")
+        val token = session.getAttribute(sessionConfiguration.sessionSecurityTokenAttribute) ?: return "redirect:/login"
+        val requestHeaders = HttpHeaders()
+        requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer $token")
+        val httpEntity = HttpEntity(CloudServiceAuthenticationRequest(),requestHeaders)
+        //for testing use a hostname verifier that doesn't do any verification
+        if ((centralControllerSettings.useSSL) && (centralControllerSettings.disableCertificateValidation)) {
+            trustSelfSignedSSL()
+            logger.warn { "SSL is enabled, but certificate validation is disabled.  This should only be used in test environments!" }
+        }
+        val cloudServiceLogoutResponse =
+                try {
+                    RestTemplate().exchange("${if (centralControllerSettings.useSSL) {
+                        "https"
+                    } else {
+                        "http"
+                    }}://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.cloudServicesPath}/logout/$selectedItem", HttpMethod.POST, httpEntity, CloudServiceAuthenticationState::class.java)
+                } catch (e: HttpClientErrorException) {
+                    model.addAttribute("status", "")
+                    var errorMessage = messageSource.getMessage("centralcontroller.error.message", null, locale)
+                    if (logger.isDebugEnabled) {
+                        errorMessage += "<br><br>${e.localizedMessage}"
+                    }
+                    model.addAttribute("error", errorMessage)
+                    return "error"
+                } catch (e: ResourceAccessException) {
+                    return if (e.cause?.message?.contains("Connection refused", true) == true) {
+                        model.addAttribute("status", "")
+                        var errorMessage = messageSource.getMessage("centralcontroller.error.message", null, locale)
+                        if (logger.isDebugEnabled) {
+                            errorMessage += "<br><br>${e.localizedMessage}"
+                        }
+                        model.addAttribute("error", errorMessage)
+                        "error"
+                    } else {
+                        model.addAttribute("error", e.localizedMessage)
+                        "error"
+                    }
+                } catch (e: Exception) {
+                    model.addAttribute("error", e.localizedMessage)
+                    return "error"
+                }
 
         addStaticAttributes(model)
         return "cloudservicessetup"
