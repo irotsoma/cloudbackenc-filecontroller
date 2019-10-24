@@ -46,6 +46,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestTemplate
 import java.util.*
+import java.util.regex.Pattern
 import javax.servlet.http.HttpSession
 import javax.validation.Valid
 
@@ -81,11 +82,27 @@ class NewUserController {
     fun createUser( @Valid newUserForm: NewUserForm, bindingResult: BindingResult, model: Model, session: HttpSession): String {
         val token = session.getAttribute(sessionConfiguration.sessionSecurityTokenAttribute) ?: return "redirect:/login"
         if (bindingResult.hasErrors()) {
+            val processedMessages = ArrayList<String>()
             for (error in bindingResult.fieldErrors){
-                model.addAttribute("${error.field}Error", error.defaultMessage)
+                if (error.field == "password"){
+                    if (error.defaultMessage?.contains(Pattern.compile("([A-Z]|_)*:\\{").toRegex()) == true) {
+                        for (message in error.defaultMessage!!.split("\u001E")) {
+                            val parsedMessage = message.split(":")
+                            processedMessages.add("<div data-toggle=\"tooltip\" data-placement=\"top\" title=\"${parsedMessage[1].replace("\"", "&quot;", false)}\">${parsedMessage[0]}</div>")
+                            val messageString = processedMessages.joinToString(separator = "")
+                            model.addAttribute("passwordError", messageString)
+                        }
+                    }
+                    else {
+                        model.addAttribute("${error.field}Error", error.defaultMessage)
+                    }
+                }
+                else {
+                    model.addAttribute("${error.field}Error", error.defaultMessage)
+                }
             }
             //Send back previous values for fields
-            if (newUserForm.username!=null) {
+            if (newUserForm.username != null) {
                 model.addAttribute("username", newUserForm.username)
             }
             if (newUserForm.email!=null) {
@@ -123,7 +140,7 @@ class NewUserController {
                 return if (e.rawStatusCode == 401) {
                         model.addAttribute("formError",messageSource.getMessage("newUserController.administratorOnly.message", null, locale))
                         //Send back previous values for fields
-                        if (newUserForm.username!=null) {
+                        if (newUserForm.username != null) {
                             model.addAttribute("username", newUserForm.username)
                         }
                         if (newUserForm.email!=null) {

@@ -22,8 +22,8 @@ import javax.validation.constraints.Email
 import javax.validation.constraints.NotEmpty
 
 @FieldMatch.List([
-    FieldMatch(first = "password", second = "confirmPassword", message = "The password fields must match"),
-    FieldMatch(first = "email", second = "confirmEmail", message = "The email fields must match")
+    FieldMatch(first = "password", second = "passwordConfirm", message = "The password fields must match"),
+    FieldMatch(first = "email", second = "emailConfirm", message = "The email fields must match")
 ])
 class NewUserForm {
     @NotEmpty
