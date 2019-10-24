@@ -96,7 +96,7 @@ class NewUserController {
             }
             addStaticAttributes(model)
             val roles = ArrayList<Option>()
-            CloudBackEncRoles.values().forEach{ if (it != CloudBackEncRoles.ROLE_TEST && newUserForm.roles.contains(Option(it.value,true))) {roles.add(Option(it.value, true))} else {roles.add(Option(it.value,false)) }}
+            CloudBackEncRoles.values().forEach{ if (it != CloudBackEncRoles.ROLE_TEST && newUserForm.roles.contains(Option(it.value,true))) {roles.add(Option(it.value, true))} else if (it != CloudBackEncRoles.ROLE_TEST) {roles.add(Option(it.value,false)) }}
             model.addAttribute("roles", roles)
             return "newuser"
         }

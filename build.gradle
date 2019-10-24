@@ -22,7 +22,7 @@ buildscript {
     ext.kotlinLoggingVersion = '1.6.22'
     ext.commonsIoVersion = '1.3.2'
     ext.apacheCommonsCompressionVersion = '1.18'
-    ext.webValidationVersion = '1.0'
+    ext.webValidationVersion = '1.2-SNAPSHOT'
     ext.jjwtVersion = '0.9.1'
     //when changing the below versions don't forget to change in the application.yml also for the web ui
     ext.bootstrapVersion = '4.2.1'
