@@ -173,6 +173,12 @@ class NewUserController {
                 return "error"
             }
         logger.debug { "New User call response: ${callResponse.statusCode}: ${callResponse.statusCodeValue}" }
+        if (callResponse.headers["RestException"]?.get(0) != null){
+            logger.debug {"Rest Exception: ${callResponse.headers["RestException"]?.get(0)}"}
+            model.addAttribute("status", "")
+            model.addAttribute("error", "Rest Exception: ${callResponse.headers["RestException"]?.get(0)}")
+            return "error"
+        }
 
         //request a login token for the new user
         if (callResponse.statusCode == HttpStatus.CREATED) {

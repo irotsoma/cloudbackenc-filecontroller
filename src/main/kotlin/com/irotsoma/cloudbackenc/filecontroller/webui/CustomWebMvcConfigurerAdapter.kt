@@ -59,8 +59,7 @@ class CustomWebMvcConfigurerAdapter : WebMvcConfigurer {
     @Bean
     fun messageSource(): MessageSource {
         val source = ResourceBundleMessageSource()
-        source.setBasenames("classpath:messages",
-                "classpath:common-messages")
+        source.setBasenames("messages", "classpath:common-messages")
         source.setDefaultEncoding("UTF-8")
         return source
     }
