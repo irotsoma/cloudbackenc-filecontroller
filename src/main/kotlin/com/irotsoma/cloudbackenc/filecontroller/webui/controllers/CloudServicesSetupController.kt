@@ -17,6 +17,7 @@
 package com.irotsoma.cloudbackenc.filecontroller.webui.controllers
 
 import com.irotsoma.cloudbackenc.common.cloudservices.CloudServiceAuthenticationRequest
+import com.irotsoma.cloudbackenc.common.cloudservices.CloudServiceAuthenticationResponse
 import com.irotsoma.cloudbackenc.common.cloudservices.CloudServiceAuthenticationState
 import com.irotsoma.cloudbackenc.common.cloudservices.CloudServiceExtensionList
 import com.irotsoma.cloudbackenc.filecontroller.CentralControllerSettings
@@ -182,10 +183,47 @@ class CloudServicesSetupController{
                     return "error"
                 }
         val selectedExtension = cloudServicesListResponse.body?.filter { it.extensionUuid == selectedItem }?.get(0)
-        if (selectedExtension?.requiresPassword == true || selectedExtension?.requiresUsername == true){
+        if (selectedExtension == null){
+            model.addAttribute("error", "Extension details returned by central controller are invalid.")
+            return "error"
+        }
+        if (selectedExtension.requiresPassword == true || selectedExtension.requiresUsername == true){
             TODO("handle case by popup prompting for username and/or password")
         }
+        val cloudServiceRequest = CloudServiceAuthenticationRequest("",null,selectedExtension.extensionUuid, null, true);
+        val authRequestHttpEntity = HttpEntity(cloudServiceRequest, requestHeaders);
 
+        val cloudServiceLoginRequest =
+                try{
+                    RestTemplate().postForEntity("${if (centralControllerSettings.useSSL) { "https" } else { "http" }}://${centralControllerSettings.host}:${centralControllerSettings.port}${centralControllerSettings.cloudServicesPath}/login/${selectedExtension.extensionUuid}",authRequestHttpEntity,CloudServiceAuthenticationResponse::class.java)
+                } catch (e: HttpClientErrorException) {
+                    model.addAttribute("status", "")
+                    var errorMessage = messageSource.getMessage("centralcontroller.error.message", null, locale)
+                    if (logger.isDebugEnabled) {
+                        errorMessage += "<br><br>${e.localizedMessage}"
+                    }
+                    model.addAttribute("error", errorMessage)
+                    return "error"
+                } catch (e: ResourceAccessException) {
+                    return if (e.cause?.message?.contains("Connection refused", true) == true){
+                        model.addAttribute("status", "")
+                        var errorMessage = messageSource.getMessage("centralcontroller.error.message", null, locale)
+                        if (logger.isDebugEnabled) {
+                            errorMessage += "<br><br>${e.localizedMessage}"
+                        }
+                        model.addAttribute("error", errorMessage)
+                        "error"
+                    } else {
+                        model.addAttribute("error", e.localizedMessage)
+                        "error"
+                    }
+                } catch (e:Exception){
+                    model.addAttribute("error", e.localizedMessage)
+                    return "error"
+                }
+        if (cloudServiceLoginRequest?.body?.cloudServiceAuthenticationState == CloudServiceAuthenticationState.AWAITING_AUTHORIZATION && cloudServiceLoginRequest.body?.cloudServiceAuthenticationUri != null){
+            return "redirect:${cloudServiceLoginRequest.body?.cloudServiceAuthenticationUri}"
+        }
 
 
 

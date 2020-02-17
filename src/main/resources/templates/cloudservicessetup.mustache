@@ -16,6 +16,14 @@
 
 {{#layout}}{{#title}}{{pageTitle}}{{/title}}
 <div class="container">
+    {{#formError}}
+        <div class="alert alert-danger alert-dismissible fade show">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            {{.}}
+        </div>
+    {{/formError}}
     <div class="row">
         <div class="disabled-list col-md-5 card card-body bg-light text-right">
 <!--            <div class="row">
@@ -34,14 +42,6 @@
         </div>
         <div class="list-arrows align-self-center col-md-1">
             <form id="cloud-services-setup-form" action="/cloudservicessetup" method="POST">
-                {{#formError}}
-                    <div class="form-group alert alert-danger alert-dismissible fade show">
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                        {{.}}
-                    </div>
-                {{/formError}}
                 <input type="hidden" id="disabled-selected-item" name="disabled-selected-item">
                 <input type="hidden" id="enabled-selected-item" name="enabled-selected-item">
                 <input type="hidden" id="enabled-selected-item-user" name="enabled-selected-item-user">
