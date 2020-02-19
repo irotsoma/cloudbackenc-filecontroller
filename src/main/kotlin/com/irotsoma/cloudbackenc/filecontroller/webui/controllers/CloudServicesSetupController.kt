@@ -222,6 +222,8 @@ class CloudServicesSetupController{
                     return "error"
                 }
         if (cloudServiceLoginRequest?.body?.cloudServiceAuthenticationState == CloudServiceAuthenticationState.AWAITING_AUTHORIZATION && cloudServiceLoginRequest.body?.cloudServiceAuthenticationUri != null){
+
+            //TODO: open this in a new tab
             return "redirect:${cloudServiceLoginRequest.body?.cloudServiceAuthenticationUri}"
         }
 
