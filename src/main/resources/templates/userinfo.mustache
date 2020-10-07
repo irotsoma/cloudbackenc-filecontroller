@@ -1,57 +1,131 @@
-<!--
-  ~ Copyright (C) 2016-2019  Irotsoma, LLC
-  ~
-  ~ This program is free software: you can redistribute it and/or modify
-  ~ it under the terms of the GNU Lesser General Public License as published by
-  ~ the Free Software Foundation, either version 3 of the License, or
-  ~ (at your option) any later version.
-  ~
-  ~ This program is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  ~ GNU Lesser General Public License for more details.
-  ~ You should have received a copy of the GNU Lesser General Public License
-  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>
-  -->
-
-{{#layout}}{{#title}}{{pageTitle}}{{/title}}
+{{#layout}}{{#title}}{{pageTitle}}{{/title}}{{#subTitle}}{{#pageSubTitle}}{{.}}{{/pageSubTitle}}{{/subTitle}}
 <div class="container">
-    <table class="table">
-        <tr>
-            <td>
-                {{usernameLabel}}
-            </td>
-            <td>
-                {{username}}
-            </td>
-        </tr>
-        <tr>
-            <td>
-                {{emailLabel}}
-            </td>
-            <td>
-                {{email}}
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th scope="col">{{userRolesLabel}}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {{#userRoles}}
-                            <tr>
-                                <td>{{.}}</td>
-                            </tr>
-                        {{/userRoles}}
-                    </tbody>
-                </table>
-            </td>
-        </tr>
-    </table>
+    <!-- change password modal -->
+    <div id="change-password-modal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">{{changePasswordLabel}}</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="container form-group">
+                    <form id="change-password-form">
+                        <div  class="form-group">
+                            <label for="password">{{passwordLabel}}</label>
+                            <input type="password" id="password" name="password" class="form-control" required />
+                        </div>
+                        <div  class="form-group">
+                            <label for="confirmPassword">{{confirmPasswordLabel}}</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required />
+                        </div>
+                        <div  class="modal-footer">
+                            <button id="change-password-submit" type="button" class="btn btn-primary">{{submitButtonLabel}}</button>
+                            <button type="button" class="btn" data-dismiss="modal">{{cancelLabel}}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
+
+
+
+    <!--body-->
+    <table class="table">
+        <thead  class="thead-light">
+            <tr>
+                <th colspan="2">{{detailsLabel}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    {{usernameLabel}}
+                </td>
+                <td>
+                    {{username}}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {{emailLabel}}
+                </td>
+                <td>
+                    {{email}}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {{passwordLabel}}
+                </td>
+                <td>
+                    <a id="changePasswordLink" href="#">{{changePasswordLabel}}</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table">
+        <thead class="thead-light">
+            <tr>
+                <th>{{userRolesLabel}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#userRoles}}
+                <tr>
+                    <td>{{.}}</td>
+                </tr>
+            {{/userRoles}}
+        </tbody>
+    </table>
 </div>
+{{#scripts}}
+<script>
+    $('#changePasswordLink').click(function (e){
+        e.preventDefault()
+        let form = $('#change-password-modal');
+        form.find('div.invalid-feedback').remove();
+        form.find('.form-control').removeClass('is-invalid');
+        form.modal('show');
+        return false;
+    });
+    $('#change-password-submit').click(function(e){
+        e.preventDefault();
+        let form = $('#change-password-form');
+        form.find('div.invalid-feedback').remove();
+        form.find('.form-control').removeClass('is-invalid');
+        $.ajax({
+            type: 'POST',
+            url : '/userinfo/ajax',
+            data : form.serialize(),
+            success: function(response) {
+                if (response.validated) {
+                    let modal = $('#change-password-modal');
+                    modal.find('input').empty();
+                    modal.modal('hide');
+                    alert("{{passwordChangeSuccessMessage}}")
+                } else {
+                    //Set error messages
+                    $.each(response.errorMessages, function (key, value) {
+                        let selector = $('#' + key);
+                        selector.addClass('is-invalid');
+                        selector.after('<div class="invalid-feedback">' + value + '</div>');
+                    });
+                }
+            },
+            error: function(e){
+                alert('Status:'+e.status+': '+e.statusText+'\nError: ' + e.message);
+            }
+        });
+    });
+
+
+
+</script>
+{{/scripts}}
+
+
+
+
 {{/layout}}

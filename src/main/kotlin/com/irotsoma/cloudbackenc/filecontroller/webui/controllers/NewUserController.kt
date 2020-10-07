@@ -46,7 +46,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestTemplate
 import java.util.*
-import java.util.regex.Pattern
 import javax.servlet.http.HttpSession
 import javax.validation.Valid
 
@@ -56,8 +55,6 @@ import javax.validation.Valid
 class NewUserController {
     /** kotlin-logging implementation*/
     private companion object: KLogging()
-    private val locale: Locale = LocaleContextHolder.getLocale()
-
     @Autowired
     private lateinit var centralControllerSettings: CentralControllerSettings
     @Autowired
@@ -80,27 +77,11 @@ class NewUserController {
     }
     @PostMapping
     fun createUser( @Valid newUserForm: NewUserForm, bindingResult: BindingResult, model: Model, session: HttpSession): String {
+        val locale: Locale = LocaleContextHolder.getLocale()
         val token = session.getAttribute(sessionConfiguration.sessionSecurityTokenAttribute) ?: return "redirect:/login"
         if (bindingResult.hasErrors()) {
-            val processedMessages = ArrayList<String>()
-            for (error in bindingResult.fieldErrors){
-                if (error.field == "password"){
-                    if (error.defaultMessage?.contains(Pattern.compile("([A-Z]|_)*:\\{").toRegex()) == true) {
-                        for (message in error.defaultMessage!!.split("\u001E")) {
-                            val parsedMessage = message.split(":")
-                            processedMessages.add("<div data-toggle=\"tooltip\" data-placement=\"top\" title=\"${parsedMessage[1].replace("\"", "&quot;", false)}\">${parsedMessage[0]}</div>")
-                            val messageString = processedMessages.joinToString(separator = "")
-                            model.addAttribute("passwordError", messageString)
-                        }
-                    }
-                    else {
-                        model.addAttribute("${error.field}Error", error.defaultMessage)
-                    }
-                }
-                else {
-                    model.addAttribute("${error.field}Error", error.defaultMessage)
-                }
-            }
+            val errors = ParseBindingResultErrors.parseBindingResultErrors(bindingResult, messageSource, locale)
+            model.addAllAttributes(errors)
             //Send back previous values for fields
             if (newUserForm.username != null) {
                 model.addAttribute("username", newUserForm.username)
@@ -223,6 +204,7 @@ class NewUserController {
         return "redirect"
     }
     fun addStaticAttributes(model:Model) {
+        val locale: Locale = LocaleContextHolder.getLocale()
         model.addAttribute("pageTitle", messageSource.getMessage("newUser.label", null, locale))
         model.addAttribute("usernameLabel", messageSource.getMessage("username.label",null,locale))
         model.addAttribute("passwordLabel", messageSource.getMessage("password.label",null,locale))

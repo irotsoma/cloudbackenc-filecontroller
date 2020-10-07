@@ -49,7 +49,6 @@ import javax.servlet.http.HttpSession
 class CloudServicesSetupController{
     /** kotlin-logging implementation*/
     private companion object: KLogging()
-    private val locale: Locale = LocaleContextHolder.getLocale()
     @Autowired
     private lateinit var centralControllerSettings: CentralControllerSettings
     @Autowired
@@ -59,6 +58,7 @@ class CloudServicesSetupController{
 
     @GetMapping
     fun get(model: Model, session: HttpSession): String {
+        val locale: Locale = LocaleContextHolder.getLocale()
         val token = session.getAttribute(sessionConfiguration.sessionSecurityTokenAttribute) ?: return "redirect:/login"
         val requestHeaders = HttpHeaders()
         requestHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer $token")
@@ -137,6 +137,7 @@ class CloudServicesSetupController{
 
     @PostMapping(params = ["add"])
     fun addCloudService(@RequestBody formData: MultiValueMap<String, String>, response: HttpServletResponse, model: Model, session: HttpSession): String{
+        val locale: Locale = LocaleContextHolder.getLocale()
         val selectedItem = formData["disabled-selected-item"]?.get(0)
         if (selectedItem.isNullOrBlank()){
             addStaticAttributes(model)
@@ -235,6 +236,7 @@ class CloudServicesSetupController{
 
     @PostMapping(params = ["remove"])
     fun removeCloudService(@RequestBody formData: MultiValueMap<String, String>, model: Model, session: HttpSession): String {
+        val locale: Locale = LocaleContextHolder.getLocale()
         val selectedItem = formData["enabled-selected-item"]?.get(0)
         if (selectedItem.isNullOrBlank()) {
             addStaticAttributes(model)
@@ -293,6 +295,7 @@ class CloudServicesSetupController{
 
 
     fun addStaticAttributes(model: Model){
+        val locale: Locale = LocaleContextHolder.getLocale()
         model.addAttribute("pageTitle", messageSource.getMessage("setupCloudServices.label", null, locale))
         model.addAttribute("usernameLabel", messageSource.getMessage("username.label", null, locale))
         model.addAttribute("passwordLabel", messageSource.getMessage("password.label", null, locale))

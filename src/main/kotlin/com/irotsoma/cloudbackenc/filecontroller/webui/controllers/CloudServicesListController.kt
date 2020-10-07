@@ -42,7 +42,6 @@ import javax.servlet.http.HttpSession
 class CloudServicesListController {
     /** kotlin-logging implementation*/
     private companion object: KLogging()
-    private val locale: Locale = LocaleContextHolder.getLocale()
     @Autowired
     private lateinit var centralControllerSettings: CentralControllerSettings
     @Autowired
@@ -50,7 +49,7 @@ class CloudServicesListController {
 
     @GetMapping
     fun get(model: Model, session: HttpSession): String {
-
+        val locale: Locale = LocaleContextHolder.getLocale()
         //for testing use a hostname verifier that doesn't do any verification
         if ((centralControllerSettings.useSSL) && (centralControllerSettings.disableCertificateValidation)) {
             trustSelfSignedSSL()

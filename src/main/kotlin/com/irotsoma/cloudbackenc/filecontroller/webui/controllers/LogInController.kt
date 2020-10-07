@@ -56,8 +56,6 @@ import javax.validation.Valid
 class LogInController {
     /** kotlin-logging implementation*/
     private companion object: KLogging()
-    private val locale: Locale = LocaleContextHolder.getLocale()
-
     @Autowired
     private lateinit var centralControllerSettings: CentralControllerSettings
     @Autowired
@@ -78,6 +76,7 @@ class LogInController {
     }
     @PostMapping
     fun authenticate(@ModelAttribute @Valid logInForm: LogInForm, bindingResult: BindingResult, response: HttpServletResponse, model: Model, session: HttpSession): String {
+        val locale: Locale = LocaleContextHolder.getLocale()
         if (bindingResult.hasErrors()) {
             for (error in bindingResult.fieldErrors){
                 model.addAttribute("${error.field}Error", error.defaultMessage)
@@ -166,6 +165,7 @@ class LogInController {
         }
     }
     fun addStaticAttributes(model: Model){
+        val locale: Locale = LocaleContextHolder.getLocale()
         model.addAttribute("usernameLabel", messageSource.getMessage("username.label",null,locale))
         model.addAttribute("passwordLabel", messageSource.getMessage("password.label",null,locale))
         model.addAttribute("submitButtonLabel", messageSource.getMessage("submit.label",null,locale))

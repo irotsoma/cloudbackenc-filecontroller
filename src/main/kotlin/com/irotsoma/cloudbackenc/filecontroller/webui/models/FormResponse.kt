@@ -16,7 +16,27 @@
 
 package com.irotsoma.cloudbackenc.filecontroller.webui.models
 
-class FormResponse {
+/**
+ * Used to respond to ajax calls to send back errors for form fields.
+ *
+ * @author Justin Zak
+ * @property name The name of the response. (optional)
+ * @property validated True if no errors were found in the data, false if errors occurred.
+ * @property errorMessages Map of field names and error messages for each field.
+ */
+class FormResponse() {
+    /**
+     * Secondary constructor with parameters for each property
+     *
+     * @param name The name of the response. (optional)
+     * @param validated True if no errors were found in the data, false if errors occurred.
+     * @param errorMessages Map of field names and error messages for each field.
+     */
+    constructor(name: String?, validated: Boolean, errorMessages:Map<String, String>?): this(){
+        this.name = name
+        this.validated = validated
+        this.errorMessages = errorMessages
+    }
     var name: String? = null
     var validated: Boolean = false
     var errorMessages: Map<String, String>? = null
